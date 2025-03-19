@@ -1,4 +1,3 @@
-
 export type Tower = {
   id: string;
   name: string;
@@ -25,7 +24,6 @@ export type Room = {
   towerId: string;
   floorNumber: number;
   wingId: string;
-  size: string;
   capacity: number;
   equipment: Equipment[];
   status: RoomStatus;

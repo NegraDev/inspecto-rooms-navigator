@@ -16,7 +16,8 @@ import {
   AlertCircle, 
   Clock, 
   Wrench,
-  MonitorCheck
+  MonitorCheck,
+  Users
 } from 'lucide-react';
 
 interface RoomCardProps {
@@ -110,8 +111,8 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
           </div>
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent text-white p-3">
             <div className="font-semibold">{room.name}</div>
-            <div className="text-sm opacity-90">
-              {room.size} • Capacidade: {room.capacity}
+            <div className="text-sm opacity-90 flex items-center gap-1">
+              <Users className="h-3.5 w-3.5" /> Capacidade: {room.capacity} pessoas
             </div>
           </div>
         </div>
@@ -136,7 +137,7 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
           </div>
           
           <div className="text-sm text-muted-foreground">
-            {`Torre ${room.towerId === 't1' ? 'Norte' : 'Sul'} • Andar ${room.floorNumber}`}
+            {`Torre ${room.towerId === 't1' ? 'A' : 'B'} • Andar ${room.floorNumber}`}
           </div>
         </CardContent>
         

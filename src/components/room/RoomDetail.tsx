@@ -12,7 +12,8 @@ import {
   CheckCircle, 
   AlertTriangle,
   Wrench,
-  HelpCircle
+  HelpCircle,
+  Users
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -103,8 +104,12 @@ export const RoomDetail: React.FC<RoomDetailProps> = ({ room }) => {
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
           <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
             <h1 className="text-2xl font-bold">{room.name}</h1>
-            <p className="text-sm mt-1 opacity-90">
-              {`Torre ${room.towerId === 't1' ? 'Norte' : 'Sul'} • Andar ${room.floorNumber} • ${room.size} • Capacidade: ${room.capacity}`}
+            <p className="text-sm mt-1 opacity-90 flex items-center gap-2">
+              {`Torre ${room.towerId === 't1' ? 'A' : 'B'} • Andar ${room.floorNumber}`}
+              <span className="flex items-center gap-1">
+                <Users className="h-4 w-4" />
+                {`Capacidade: ${room.capacity} pessoas`}
+              </span>
             </p>
           </div>
         </div>

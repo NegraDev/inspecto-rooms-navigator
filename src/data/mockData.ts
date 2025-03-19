@@ -1,11 +1,10 @@
-
 import { Tower, Room, Equipment, EquipmentType, EquipmentStatus, RoomStatus, Wing, Inspection, InspectionStatus, Inspector, Report } from "../types";
 
 // Towers
 export const towers: Tower[] = [
   {
     id: "t1",
-    name: "Torre Norte",
+    name: "Torre A",
     floors: 20,
     wings: [
       { id: "w1", name: "Ala Norte", towerId: "t1" },
@@ -14,8 +13,8 @@ export const towers: Tower[] = [
   },
   {
     id: "t2",
-    name: "Torre Sul",
-    floors: 15,
+    name: "Torre B",
+    floors: 14,
     wings: [
       { id: "w3", name: "Ala Norte", towerId: "t2" },
       { id: "w4", name: "Ala Sul", towerId: "t2" }
@@ -57,7 +56,6 @@ export const generateRooms = (): Room[] => {
             towerId: tower.id,
             floorNumber: floor,
             wingId: wing.id,
-            size: `${Math.floor(Math.random() * 50) + 20}m²`,
             capacity: Math.floor(Math.random() * 20) + 5,
             equipment: generateEquipment(`${tower.id}-${floor}-${wing.id}-${i}`),
             status: roomStatuses[Math.floor(Math.random() * roomStatuses.length)],
