@@ -11,6 +11,7 @@ import RoomDetailPage from "./pages/RoomDetailPage";
 import CameraPage from "./pages/CameraPage";
 import ReportsPage from "./pages/ReportsPage";
 import InspectionsPage from "./pages/InspectionsPage";
+import ImportPage from "./pages/ImportPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,6 +30,7 @@ const App = () => (
           <Route path="/camera" element={<CameraPage />} />
           <Route path="/reports" element={<ReportsPage />} />
           <Route path="/inspections" element={<InspectionsPage />} />
+          <Route path="/import" element={<ImportPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

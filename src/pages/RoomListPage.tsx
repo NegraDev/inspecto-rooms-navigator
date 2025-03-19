@@ -3,15 +3,42 @@ import React, { useState, useEffect } from 'react';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { RoomCard } from '@/components/room/RoomCard';
 import { FilterBar } from '@/components/filter/FilterBar';
-import { rooms, towers } from '@/data/mockData';
-import { FilterOptions, Room } from '@/types';
+import { rooms as mockRooms, towers as mockTowers } from '@/data/mockData';
+import { FilterOptions, Room, Tower } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Grid, List, AlertCircle } from 'lucide-react';
+import { Grid, List, AlertCircle, FileSpreadsheet, Plus } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const RoomListPage = () => {
-  const [filteredRooms, setFilteredRooms] = useState<Room[]>(rooms);
+  const [towers, setTowers] = useState<Tower[]>(mockTowers);
+  const [rooms, setRooms] = useState<Room[]>(mockRooms);
+  const [filteredRooms, setFilteredRooms] = useState<Room[]>(mockRooms);
   const [activeFilters, setActiveFilters] = useState<FilterOptions>({});
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [importSource, setImportSource] = useState<'mock' | 'imported'>('mock');
+  
+  // Carregar dados importados, se existirem
+  useEffect(() => {
+    const importedTowers = localStorage.getItem('importedTowers');
+    const importedRooms = localStorage.getItem('importedRooms');
+    
+    if (importedTowers && importedRooms) {
+      try {
+        const parsedTowers = JSON.parse(importedTowers);
+        const parsedRooms = JSON.parse(importedRooms);
+        
+        if (Array.isArray(parsedTowers) && Array.isArray(parsedRooms) && 
+            parsedTowers.length > 0 && parsedRooms.length > 0) {
+          setTowers(parsedTowers);
+          setRooms(parsedRooms);
+          setFilteredRooms(parsedRooms);
+          setImportSource('imported');
+        }
+      } catch (error) {
+        console.error('Erro ao carregar dados importados:', error);
+      }
+    }
+  }, []);
   
   const handleFilterChange = (filters: FilterOptions) => {
     setActiveFilters(filters);
@@ -44,7 +71,7 @@ const RoomListPage = () => {
     }
     
     setFilteredRooms(result);
-  }, [activeFilters]);
+  }, [activeFilters, rooms]);
   
   return (
     <PageLayout>
@@ -77,8 +104,22 @@ const RoomListPage = () => {
               <List className="h-4 w-4" />
               <span className="sr-only">Visualização em lista</span>
             </Button>
+            
+            <Link to="/import">
+              <Button variant="outline" className="h-9 flex items-center gap-2">
+                <FileSpreadsheet className="h-4 w-4" />
+                <span className="hidden sm:inline">Importar</span>
+              </Button>
+            </Link>
           </div>
         </div>
+        
+        {importSource === 'imported' && (
+          <div className="bg-blue-50 border border-blue-200 rounded p-3 text-blue-700 text-sm flex items-center gap-2">
+            <FileSpreadsheet className="h-4 w-4" />
+            <span>Utilizando dados importados. {rooms.length} salas de {towers.length} torres carregadas.</span>
+          </div>
+        )}
         
         <FilterBar 
           towers={towers}

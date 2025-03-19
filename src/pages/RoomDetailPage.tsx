@@ -5,7 +5,7 @@ import { PageLayout } from '@/components/layout/PageLayout';
 import { RoomDetail } from '@/components/room/RoomDetail';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
-import { rooms } from '@/data/mockData';
+import { rooms as mockRooms } from '@/data/mockData';
 import { Room } from '@/types';
 
 const RoomDetailPage = () => {
@@ -15,12 +15,27 @@ const RoomDetailPage = () => {
   const [loading, setLoading] = useState(true);
   
   useEffect(() => {
-    // Simulate loading data
+    // Simular carregamento
     setLoading(true);
     
     setTimeout(() => {
       if (id) {
-        const foundRoom = rooms.find(r => r.id === id);
+        // Tentar carregar primeiro dos dados importados
+        const importedRooms = localStorage.getItem('importedRooms');
+        let allRooms = mockRooms;
+        
+        if (importedRooms) {
+          try {
+            const parsedRooms = JSON.parse(importedRooms);
+            if (Array.isArray(parsedRooms) && parsedRooms.length > 0) {
+              allRooms = parsedRooms;
+            }
+          } catch (error) {
+            console.error('Erro ao carregar dados importados:', error);
+          }
+        }
+        
+        const foundRoom = allRooms.find(r => r.id === id);
         setRoom(foundRoom || null);
       }
       setLoading(false);
