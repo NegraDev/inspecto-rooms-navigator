@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, FileSpreadsheet, Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Tower, Room, RoomStatus, EquipmentType } from '@/types';
+import { Tower, Room, RoomStatus, EquipmentType, EquipmentStatus } from '@/types';
 import { Separator } from '@/components/ui/separator';
 
 interface ExcelImportProps {
@@ -114,14 +114,14 @@ export const ExcelImport: React.FC<ExcelImportProps> = ({ onImportComplete }) =>
             id: `eq-${roomId}-1`,
             type: EquipmentType.AC,
             name: "AC 1",
-            status: "WORKING",
+            status: EquipmentStatus.WORKING,
             lastChecked: new Date().toISOString()
           },
           {
             id: `eq-${roomId}-2`,
             type: EquipmentType.LIGHT,
             name: "Luz 1",
-            status: "WORKING",
+            status: EquipmentStatus.WORKING,
             lastChecked: new Date().toISOString()
           }
         ];
@@ -132,7 +132,7 @@ export const ExcelImport: React.FC<ExcelImportProps> = ({ onImportComplete }) =>
             id: `eq-${roomId}-3`,
             type: EquipmentType.TV,
             name: "TV Videoconferência",
-            status: "WORKING",
+            status: EquipmentStatus.WORKING,
             lastChecked: new Date().toISOString()
           });
         }
