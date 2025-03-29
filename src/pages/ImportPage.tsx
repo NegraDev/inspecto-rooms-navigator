@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { ExcelImport } from '@/components/import/ExcelImport';
 import { Tower, Room } from '@/types';
@@ -8,28 +7,30 @@ import { AlertCircle, CheckCircle2, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 
 const ImportPage = () => {
   const [importedData, setImportedData] = useState<{ towers: Tower[], rooms: Room[] } | null>(null);
   const [importing, setImporting] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const { isAdmin } = useAuth();
   const navigate = useNavigate();
   
-  // Verificar se o usuário é um administrador ao carregar o componente
-  useEffect(() => {
-    const adminStatus = localStorage.getItem('isAdmin') === 'true';
-    setIsAdmin(adminStatus);
-    
-    // Redirecionar usuários não autorizados
-    if (!adminStatus) {
-      toast({
-        title: "Acesso Restrito",
-        description: "Esta página é apenas para administradores.",
-        variant: "destructive"
-      });
-      navigate('/');
-    }
-  }, [navigate]);
+  // Verifique se o usuário é admin (ProtectedRoute já faz essa verificação, mas essa é uma camada a mais de segurança)
+  if (!isAdmin) {
+    return (
+      <PageLayout>
+        <div className="flex items-center justify-center h-full">
+          <Alert variant="destructive" className="max-w-md">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Acesso Restrito</AlertTitle>
+            <AlertDescription>
+              Esta página é reservada apenas para administradores do sistema.
+            </AlertDescription>
+          </Alert>
+        </div>
+      </PageLayout>
+    );
+  }
   
   const handleImportComplete = (towers: Tower[], rooms: Room[]) => {
     setImportedData({ towers, rooms });
@@ -56,22 +57,6 @@ const ImportPage = () => {
       navigate('/rooms');
     }, 1500);
   };
-  
-  if (!isAdmin) {
-    return (
-      <PageLayout>
-        <div className="flex items-center justify-center h-full">
-          <Alert variant="destructive" className="max-w-md">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Acesso Restrito</AlertTitle>
-            <AlertDescription>
-              Esta página é reservada apenas para administradores do sistema.
-            </AlertDescription>
-          </Alert>
-        </div>
-      </PageLayout>
-    );
-  }
   
   return (
     <PageLayout>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Button } from '@/components/ui/button';
 import { 
@@ -10,16 +10,13 @@ import {
   ChevronRight,
   Camera,
   FileInput,
-  Shield
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { towers, rooms, inspectors, inspections } from '@/data/mockData';
 import { RoomCard } from '@/components/room/RoomCard';
 import { Link } from 'react-router-dom';
 import { Progress } from '@/components/ui/progress';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { toast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Index = () => {
   // Get some stats for the dashboard
@@ -27,28 +24,8 @@ const Index = () => {
   const inspectedRooms = rooms.filter(room => room.lastInspection).length;
   const percentageInspected = Math.round((inspectedRooms / totalRooms) * 100);
   
-  // Estado para controle de admin
-  const [isAdmin, setIsAdmin] = useState(false);
-  
-  // Carregar status de admin do localStorage
-  useEffect(() => {
-    const savedAdminStatus = localStorage.getItem('isAdmin') === 'true';
-    setIsAdmin(savedAdminStatus);
-  }, []);
-  
-  // Alternar status de admin
-  const toggleAdminMode = () => {
-    const newStatus = !isAdmin;
-    setIsAdmin(newStatus);
-    localStorage.setItem('isAdmin', newStatus.toString());
-    
-    toast({
-      title: newStatus ? "Modo administrador ativado" : "Modo administrador desativado",
-      description: newStatus 
-        ? "Você agora tem acesso às funcionalidades de administrador" 
-        : "Acesso de administrador revogado",
-    });
-  };
+  // Usar o contexto de autenticação
+  const { user, isAdmin } = useAuth();
   
   return (
     <PageLayout>
@@ -56,7 +33,7 @@ const Index = () => {
         <section className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold">Bem-vindo ao Inspecto Rooms</h1>
+              <h1 className="text-2xl font-bold">Bem-vindo ao Inspecto Rooms, {user?.name}</h1>
               <p className="text-muted-foreground">Gerencie e inspecione salas com facilidade</p>
             </div>
             
@@ -84,22 +61,6 @@ const Index = () => {
                 </Link>
               </Button>
             </div>
-          </div>
-          
-          {/* Admin Toggle Control - apenas para demonstração */}
-          <div className="flex items-center space-x-2 p-2 bg-muted rounded-md border border-border">
-            <Switch 
-              id="admin-mode"
-              checked={isAdmin}
-              onCheckedChange={toggleAdminMode}
-            />
-            <Label htmlFor="admin-mode" className="flex items-center gap-2">
-              <Shield className="h-4 w-4" />
-              Modo Administrador
-            </Label>
-            <p className="text-xs text-muted-foreground ml-2">
-              (Apenas para demonstração)
-            </p>
           </div>
         </section>
         

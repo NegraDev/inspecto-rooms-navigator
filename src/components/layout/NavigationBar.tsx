@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { 
@@ -10,8 +10,10 @@ import {
   Settings, 
   CheckSquare,
   LayoutDashboard,
-  FileInput
+  FileInput,
+  LogOut
 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 type NavItem = {
   label: string;
@@ -33,24 +35,7 @@ const navItems: NavItem[] = [
 
 export const NavigationBar: React.FC = () => {
   const location = useLocation();
-  const [isAdmin, setIsAdmin] = useState(false);
-  
-  // Verificar se o usuário é um administrador ao carregar o componente
-  useEffect(() => {
-    // Em um sistema real, isso viria de um sistema de autenticação
-    // Por enquanto, vamos usar localStorage para demonstração
-    const checkAdminStatus = () => {
-      const adminStatus = localStorage.getItem('isAdmin') === 'true';
-      setIsAdmin(adminStatus);
-    };
-    
-    checkAdminStatus();
-    
-    // Se ainda não houver status de admin definido, definimos como falso por padrão
-    if (localStorage.getItem('isAdmin') === null) {
-      localStorage.setItem('isAdmin', 'false');
-    }
-  }, []);
+  const { isAdmin, logout } = useAuth();
   
   return (
     <nav className="w-full md:w-56 flex flex-col">
@@ -85,6 +70,15 @@ export const NavigationBar: React.FC = () => {
               </Link>
             );
           })}
+          
+        {/* Botão de Logout */}
+        <button
+          onClick={logout}
+          className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+        >
+          <LogOut className="h-5 w-5" />
+          Sair
+        </button>
       </div>
     </nav>
   );
