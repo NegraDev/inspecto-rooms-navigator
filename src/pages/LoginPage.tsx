@@ -1,69 +1,51 @@
 
 import React, { useState } from 'react';
-import { useNavigate, Navigate } from 'react-router-dom';
-import { PageLayout } from '@/components/layout/PageLayout';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { useToast } from '@/hooks/use-toast';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { z } from 'zod';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Lock, LogIn, User } from 'lucide-react';
-
-// Esquema de validação para o formulário de login
-const loginSchema = z.object({
-  email: z.string().email('Email inválido'),
-  password: z.string().min(6, 'A senha deve ter pelo menos 6 caracteres'),
-});
-
-type LoginFormValues = z.infer<typeof loginSchema>;
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { PageLayout } from '@/components/layout/PageLayout';
+import { toast } from '@/components/ui/use-toast';
+import { LogIn } from 'lucide-react';
 
 const LoginPage = () => {
-  const navigate = useNavigate();
-  const { login, isAuthenticated } = useAuth();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
+  const { login } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   
-  // Se já estiver autenticado, redirecionar para a página inicial
-  if (isAuthenticated) {
-    return <Navigate to="/" />;
-  }
+  // Obter o caminho de redirecionamento, se houver
+  const from = location.state?.from?.pathname || '/';
   
-  // Configurar o formulário com React Hook Form e Zod
-  const form = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: '',
-      password: '',
-    },
-  });
-  
-  // Função para lidar com o envio do formulário
-  const onSubmit = async (values: LoginFormValues) => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setIsLoading(true);
+    
     try {
-      const success = await login(values.email, values.password);
+      const success = await login(email, password);
       
       if (success) {
         toast({
           title: "Login realizado com sucesso",
           description: "Bem-vindo de volta!",
         });
-        navigate('/');
+        navigate(from);
       } else {
         toast({
-          title: "Falha no login",
-          description: "Email ou senha incorretos.",
+          title: "Erro de login",
+          description: "Email ou senha incorretos",
           variant: "destructive",
         });
       }
     } catch (error) {
+      console.error("Erro no login:", error);
       toast({
-        title: "Erro",
-        description: "Ocorreu um erro ao fazer login. Tente novamente.",
+        title: "Erro de autenticação",
+        description: "Ocorreu um erro durante o login",
         variant: "destructive",
       });
     } finally {
@@ -72,102 +54,63 @@ const LoginPage = () => {
   };
   
   return (
-    <PageLayout showNav={false}>
-      <div className="flex items-center justify-center min-h-screen">
+    <PageLayout>
+      <div className="flex items-center justify-center min-h-[80vh]">
         <Card className="w-full max-w-md">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold text-center">Inspecto Rooms</CardTitle>
-            <CardDescription className="text-center">
+            <CardTitle className="text-2xl font-bold">Login</CardTitle>
+            <CardDescription>
               Entre com suas credenciais para acessar o sistema
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                          <Input 
-                            placeholder="seu@email.com" 
-                            className="pl-10" 
-                            autoComplete="email"
-                            disabled={isLoading}
-                            {...field} 
-                          />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+          
+          <form onSubmit={handleSubmit}>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="seu.email@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
                 />
-                
-                <FormField
-                  control={form.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Senha</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                          <Input 
-                            type="password" 
-                            placeholder="********" 
-                            className="pl-10" 
-                            autoComplete="current-password"
-                            disabled={isLoading}
-                            {...field} 
-                          />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? (
-                    <>
-                      <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-b-transparent" />
-                      <span>Entrando...</span>
-                    </>
-                  ) : (
-                    <>
-                      <LogIn className="mr-2 h-4 w-4" />
-                      <span>Entrar</span>
-                    </>
-                  )}
-                </Button>
-              </form>
-            </Form>
-            
-            <div className="mt-4 text-center text-sm text-muted-foreground">
-              <p>Demonstração:</p>
-              <div className="mt-1 grid gap-1">
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className="rounded bg-muted p-2">
-                    <div className="font-medium">Admin</div>
-                    <div className="text-muted-foreground">admin@example.com</div>
-                    <div className="text-muted-foreground">admin123</div>
-                  </div>
-                  <div className="rounded bg-muted p-2">
-                    <div className="font-medium">Usuário</div>
-                    <div className="text-muted-foreground">user@example.com</div>
-                    <div className="text-muted-foreground">user123</div>
-                  </div>
-                </div>
               </div>
-            </div>
-          </CardContent>
-          <CardFooter className="flex justify-center text-xs text-muted-foreground">
-            <p>Inspecto Rooms &copy; {new Date().getFullYear()}</p>
-          </CardFooter>
+              
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password">Senha</Label>
+                </div>
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+              
+              <div className="text-sm text-muted-foreground">
+                <p>Usuários para teste:</p>
+                <p>Admin: admin@example.com / admin123</p>
+                <p>Usuário: user@example.com / user123</p>
+              </div>
+            </CardContent>
+            
+            <CardFooter>
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? (
+                  <span>Carregando...</span>
+                ) : (
+                  <>
+                    <LogIn className="h-4 w-4 mr-2" />
+                    <span>Entrar</span>
+                  </>
+                )}
+              </Button>
+            </CardFooter>
+          </form>
         </Card>
       </div>
     </PageLayout>

@@ -1,3 +1,4 @@
+
 export type Tower = {
   id: string;
   name: string;
@@ -113,4 +114,25 @@ export type Report = {
   issuesFound: number;
   inspectorId: string;
   inspectionIds: string[];
+};
+
+export type PerformanceReport = {
+  id: string;
+  period: 'daily' | 'weekly' | 'monthly';
+  date: string;
+  inspectorId: string;
+  inspectorName: string;
+  inspectionsCompleted: number;
+  issuesIdentified: number;
+  averageTimePerInspection: number;
+  efficiency: number;
+};
+
+export type TeamPerformance = {
+  period: 'daily' | 'weekly' | 'monthly';
+  date: string;
+  inspectors: PerformanceReport[];
+  totalInspections: number;
+  totalIssues: number;
+  averageEfficiency: number;
 };

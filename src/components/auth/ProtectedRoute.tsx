@@ -6,13 +6,17 @@ import { useAuth } from '@/contexts/AuthContext';
 interface ProtectedRouteProps {
   children: React.ReactNode;
   requireAdmin?: boolean;
+  requireSupervisor?: boolean;
+  allowInspector?: boolean;
 }
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
   children, 
-  requireAdmin = false 
+  requireAdmin = false,
+  requireSupervisor = false,
+  allowInspector = true
 }) => {
-  const { isAuthenticated, isAdmin } = useAuth();
+  const { isAuthenticated, isAdmin, isSupervisor, isInspector } = useAuth();
   const location = useLocation();
 
   // Se não estiver autenticado, redirecionar para a página de login
@@ -23,6 +27,17 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   // Se a rota requer privilégios de administrador e o usuário não for admin
   if (requireAdmin && !isAdmin) {
     // Redirecionar para a página inicial
+    return <Navigate to="/" replace />;
+  }
+
+  // Se a rota requer privilégios de supervisor e o usuário não for supervisor nem admin
+  if (requireSupervisor && !isSupervisor) {
+    // Redirecionar para a página inicial
+    return <Navigate to="/" replace />;
+  }
+
+  // Se a rota não permite inspetores e o usuário é apenas inspetor
+  if (!allowInspector && isInspector && !isSupervisor) {
     return <Navigate to="/" replace />;
   }
 

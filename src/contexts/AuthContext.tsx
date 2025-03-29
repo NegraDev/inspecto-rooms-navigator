@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 // Tipos para o contexto de autenticação
-export type UserRole = 'user' | 'admin';
+export type UserRole = 'user' | 'admin' | 'inspector' | 'supervisor';
 
 export interface User {
   id: string;
@@ -15,6 +15,8 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isAdmin: boolean;
+  isSupervisor: boolean;
+  isInspector: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
 }
@@ -24,6 +26,8 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   isAuthenticated: false,
   isAdmin: false,
+  isSupervisor: false,
+  isInspector: false,
   login: async () => false,
   logout: () => {},
 });
@@ -40,8 +44,22 @@ const DEMO_USERS: Record<string, User & { password: string }> = {
     password: 'admin123',
     role: 'admin',
   },
-  'user@example.com': {
+  'supervisor@example.com': {
     id: '2',
+    name: 'Carlos Supervisor',
+    email: 'supervisor@example.com',
+    password: 'super123',
+    role: 'supervisor',
+  },
+  'inspector@example.com': {
+    id: '3',
+    name: 'Maria Inspetora',
+    email: 'inspector@example.com',
+    password: 'insp123',
+    role: 'inspector',
+  },
+  'user@example.com': {
+    id: '4',
     name: 'Usuário Comum',
     email: 'user@example.com',
     password: 'user123',
@@ -82,7 +100,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           localStorage.setItem('user', JSON.stringify(userWithoutPassword));
           
           // Em uma aplicação real, aqui seria armazenado um token JWT
-          localStorage.setItem('isAdmin', user.role === 'admin' ? 'true' : 'false');
+          localStorage.setItem('userRole', user.role);
           
           resolve(true);
         } else {
@@ -96,7 +114,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = () => {
     setUser(null);
     localStorage.removeItem('user');
-    localStorage.removeItem('isAdmin');
+    localStorage.removeItem('userRole');
   };
 
   // Valores para o provedor de contexto
@@ -104,6 +122,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     user,
     isAuthenticated: !!user,
     isAdmin: user?.role === 'admin' || false,
+    isSupervisor: user?.role === 'supervisor' || user?.role === 'admin' || false,
+    isInspector: user?.role === 'inspector' || false,
     login,
     logout,
   };
