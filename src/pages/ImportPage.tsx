@@ -1,10 +1,10 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { ExcelImport } from '@/components/import/ExcelImport';
 import { Tower, Room } from '@/types';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, CheckCircle2 } from 'lucide-react';
+import { AlertCircle, CheckCircle2, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
@@ -12,7 +12,24 @@ import { useNavigate } from 'react-router-dom';
 const ImportPage = () => {
   const [importedData, setImportedData] = useState<{ towers: Tower[], rooms: Room[] } | null>(null);
   const [importing, setImporting] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
+  
+  // Verificar se o usuário é um administrador ao carregar o componente
+  useEffect(() => {
+    const adminStatus = localStorage.getItem('isAdmin') === 'true';
+    setIsAdmin(adminStatus);
+    
+    // Redirecionar usuários não autorizados
+    if (!adminStatus) {
+      toast({
+        title: "Acesso Restrito",
+        description: "Esta página é apenas para administradores.",
+        variant: "destructive"
+      });
+      navigate('/');
+    }
+  }, [navigate]);
   
   const handleImportComplete = (towers: Tower[], rooms: Room[]) => {
     setImportedData({ towers, rooms });
@@ -40,14 +57,35 @@ const ImportPage = () => {
     }, 1500);
   };
   
+  if (!isAdmin) {
+    return (
+      <PageLayout>
+        <div className="flex items-center justify-center h-full">
+          <Alert variant="destructive" className="max-w-md">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Acesso Restrito</AlertTitle>
+            <AlertDescription>
+              Esta página é reservada apenas para administradores do sistema.
+            </AlertDescription>
+          </Alert>
+        </div>
+      </PageLayout>
+    );
+  }
+  
   return (
     <PageLayout>
       <div className="space-y-6 animate-fade-in">
-        <div>
-          <h1 className="text-2xl font-bold">Importar Dados</h1>
-          <p className="text-muted-foreground">
-            Importe dados de salas e torres a partir de um arquivo Excel
-          </p>
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+          <div>
+            <h1 className="text-2xl font-bold flex items-center gap-2">
+              <ShieldAlert className="h-5 w-5 text-amber-500" />
+              Área Administrativa - Importar Dados
+            </h1>
+            <p className="text-muted-foreground">
+              Importe dados de salas e torres a partir de um arquivo Excel
+            </p>
+          </div>
         </div>
         
         <ExcelImport onImportComplete={handleImportComplete} />

@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Button } from '@/components/ui/button';
 import { 
@@ -9,19 +8,47 @@ import {
   FileText, 
   ClipboardCheck, 
   ChevronRight,
-  Camera
+  Camera,
+  FileInput,
+  Shield
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { towers, rooms, inspectors, inspections } from '@/data/mockData';
 import { RoomCard } from '@/components/room/RoomCard';
 import { Link } from 'react-router-dom';
 import { Progress } from '@/components/ui/progress';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { toast } from '@/hooks/use-toast';
 
 const Index = () => {
   // Get some stats for the dashboard
   const totalRooms = rooms.length;
   const inspectedRooms = rooms.filter(room => room.lastInspection).length;
   const percentageInspected = Math.round((inspectedRooms / totalRooms) * 100);
+  
+  // Estado para controle de admin
+  const [isAdmin, setIsAdmin] = useState(false);
+  
+  // Carregar status de admin do localStorage
+  useEffect(() => {
+    const savedAdminStatus = localStorage.getItem('isAdmin') === 'true';
+    setIsAdmin(savedAdminStatus);
+  }, []);
+  
+  // Alternar status de admin
+  const toggleAdminMode = () => {
+    const newStatus = !isAdmin;
+    setIsAdmin(newStatus);
+    localStorage.setItem('isAdmin', newStatus.toString());
+    
+    toast({
+      title: newStatus ? "Modo administrador ativado" : "Modo administrador desativado",
+      description: newStatus 
+        ? "Você agora tem acesso às funcionalidades de administrador" 
+        : "Acesso de administrador revogado",
+    });
+  };
   
   return (
     <PageLayout>
@@ -41,6 +68,15 @@ const Index = () => {
                 </Link>
               </Button>
               
+              {isAdmin && (
+                <Button asChild variant="outline">
+                  <Link to="/import" className="flex items-center gap-2">
+                    <FileInput className="h-4 w-4" />
+                    <span>Importar Dados</span>
+                  </Link>
+                </Button>
+              )}
+              
               <Button asChild variant="outline">
                 <Link to="/reports" className="flex items-center gap-2">
                   <FileText className="h-4 w-4" />
@@ -48,6 +84,22 @@ const Index = () => {
                 </Link>
               </Button>
             </div>
+          </div>
+          
+          {/* Admin Toggle Control - apenas para demonstração */}
+          <div className="flex items-center space-x-2 p-2 bg-muted rounded-md border border-border">
+            <Switch 
+              id="admin-mode"
+              checked={isAdmin}
+              onCheckedChange={toggleAdminMode}
+            />
+            <Label htmlFor="admin-mode" className="flex items-center gap-2">
+              <Shield className="h-4 w-4" />
+              Modo Administrador
+            </Label>
+            <p className="text-xs text-muted-foreground ml-2">
+              (Apenas para demonstração)
+            </p>
           </div>
         </section>
         
