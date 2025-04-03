@@ -1,7 +1,7 @@
 
 import { Tower, Room, Inspection, Equipment, Inspector, Report, PerformanceReport } from '@/types';
-import { mockTowers, mockRooms, mockInspectors, mockInspections, mockReports } from '@/data/mockData';
-import { performanceReports } from '@/data/performanceData';
+import { towers, rooms, inspectors, inspections, reports } from '@/data/mockData';
+import { dailyPerformance, weeklyPerformance, monthlyPerformance } from '@/data/performanceData';
 
 /**
  * Modo de API - Local usa dados mockados, AWS usa API Gateway
@@ -96,7 +96,7 @@ class ApiService {
     if (this.mode === 'local') {
       // Simula um pequeno atraso de rede
       await new Promise(resolve => setTimeout(resolve, 300));
-      return mockTowers;
+      return towers;
     }
 
     return this.fetchFromAws<Tower[]>('towers');
@@ -108,7 +108,7 @@ class ApiService {
   public async getRooms(): Promise<Room[]> {
     if (this.mode === 'local') {
       await new Promise(resolve => setTimeout(resolve, 300));
-      return mockRooms;
+      return rooms;
     }
 
     return this.fetchFromAws<Room[]>('rooms');
@@ -120,7 +120,7 @@ class ApiService {
   public async getRoomById(id: string): Promise<Room | undefined> {
     if (this.mode === 'local') {
       await new Promise(resolve => setTimeout(resolve, 200));
-      return mockRooms.find(room => room.id === id);
+      return rooms.find(room => room.id === id);
     }
 
     return this.fetchFromAws<Room>(`rooms/${id}`);
@@ -132,7 +132,7 @@ class ApiService {
   public async getRoomsByTower(towerId: string): Promise<Room[]> {
     if (this.mode === 'local') {
       await new Promise(resolve => setTimeout(resolve, 300));
-      return mockRooms.filter(room => room.towerId === towerId);
+      return rooms.filter(room => room.towerId === towerId);
     }
 
     return this.fetchFromAws<Room[]>(`towers/${towerId}/rooms`);
@@ -144,7 +144,7 @@ class ApiService {
   public async getInspections(): Promise<Inspection[]> {
     if (this.mode === 'local') {
       await new Promise(resolve => setTimeout(resolve, 300));
-      return mockInspections;
+      return inspections;
     }
 
     return this.fetchFromAws<Inspection[]>('inspections');
@@ -156,7 +156,7 @@ class ApiService {
   public async getInspectionById(id: string): Promise<Inspection | undefined> {
     if (this.mode === 'local') {
       await new Promise(resolve => setTimeout(resolve, 200));
-      return mockInspections.find(inspection => inspection.id === id);
+      return inspections.find(inspection => inspection.id === id);
     }
 
     return this.fetchFromAws<Inspection>(`inspections/${id}`);
@@ -169,13 +169,28 @@ class ApiService {
     if (this.mode === 'local') {
       await new Promise(resolve => setTimeout(resolve, 300));
       
-      // Se um ID de inspetor for fornecido, filtra os relatórios apenas para esse inspetor
-      if (inspectorId) {
-        return performanceReports
-          .filter(report => report.period === period && report.inspectorId === inspectorId);
+      let performanceData: PerformanceReport[];
+      
+      switch (period) {
+        case 'daily':
+          performanceData = dailyPerformance;
+          break;
+        case 'weekly':
+          performanceData = weeklyPerformance;
+          break;
+        case 'monthly':
+          performanceData = monthlyPerformance;
+          break;
+        default:
+          performanceData = dailyPerformance;
       }
       
-      return performanceReports.filter(report => report.period === period);
+      // Se um ID de inspetor for fornecido, filtra os relatórios apenas para esse inspetor
+      if (inspectorId) {
+        return performanceData.filter(report => report.inspectorId === inspectorId);
+      }
+      
+      return performanceData;
     }
 
     const path = inspectorId 
