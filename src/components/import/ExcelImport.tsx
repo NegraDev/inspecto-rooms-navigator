@@ -1,307 +1,308 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import * as XLSX from 'xlsx';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Card, CardContent } from '@/components/ui/card';
+import { Upload, AlertCircle, FileSpreadsheet } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, FileSpreadsheet, Upload } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { Tower, Room, RoomStatus, EquipmentType, EquipmentStatus } from '@/types';
-import { Separator } from '@/components/ui/separator';
+import { Tower, Wing, Room, EquipmentType, EquipmentStatus, RoomStatus } from '@/types';
+import { Badge } from '@/components/ui/badge';
 
-interface ExcelImportProps {
+type ExcelImportProps = {
   onImportComplete: (towers: Tower[], rooms: Room[]) => void;
-}
+};
 
 export const ExcelImport: React.FC<ExcelImportProps> = ({ onImportComplete }) => {
   const [file, setFile] = useState<File | null>(null);
-  const [importing, setImporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [previewData, setPreviewData] = useState<any[] | null>(null);
-  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
+    if (e.target.files && e.target.files.length > 0) {
+      const selectedFile = e.target.files[0];
+      if (!selectedFile.name.endsWith('.xlsx') && !selectedFile.name.endsWith('.xls')) {
+        setError('Por favor, selecione um arquivo Excel (.xlsx ou .xls)');
+        setFile(null);
+        return;
+      }
+      
+      setFile(selectedFile);
       setError(null);
-      handleFilePreview(e.target.files[0]);
     }
   };
 
-  const handleFilePreview = async (file: File) => {
-    try {
-      const data = await readExcelFile(file);
-      setPreviewData(data.slice(0, 5)); // Show only first 5 rows as preview
-    } catch (err) {
-      setError('Não foi possível ler o arquivo para prévia. Verifique o formato.');
-      setPreviewData(null);
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleImport = async () => {
+    if (!file) {
+      setError('Por favor, selecione um arquivo Excel para importar');
+      return;
     }
-  };
 
-  const readExcelFile = (file: File): Promise<any[]> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      
-      reader.onload = (e) => {
-        try {
-          const data = e.target?.result;
-          const workbook = XLSX.read(data, { type: 'binary' });
-          const sheetName = workbook.SheetNames[0];
-          const worksheet = workbook.Sheets[sheetName];
-          const json = XLSX.utils.sheet_to_json(worksheet);
-          resolve(json);
-        } catch (error) {
-          reject(error);
-        }
-      };
-      
-      reader.onerror = (error) => reject(error);
-      reader.readAsBinaryString(file);
-    });
-  };
-
-  const processExcelData = async () => {
-    if (!file) return;
-    
-    setImporting(true);
+    setIsLoading(true);
     setError(null);
-    
+
     try {
       const data = await readExcelFile(file);
       
-      // Este é um exemplo de processamento - ajuste conforme seu formato de Excel específico
-      // Assumindo que o Excel tem colunas como: Torre, Andar, Numero, Nome, Capacidade, Videoconferencia, etc.
+      // Process the data
+      const { towers, rooms } = processExcelData(data);
       
-      // Processando torres
-      const towersMap = new Map<string, Tower>();
-      const roomsData: Room[] = [];
-      
-      data.forEach((row: any) => {
-        // Extraindo informações da torre
-        const towerName = row.Torre || '';
-        const towerIdRaw = towerName.includes('A') ? 't1' : 't2';
-        const towerFloors = towerIdRaw === 't1' ? 20 : 14;
-        
-        // Garantindo que a torre existe no mapa
-        if (!towersMap.has(towerIdRaw)) {
-          towersMap.set(towerIdRaw, {
-            id: towerIdRaw,
-            name: towerName,
-            floors: towerFloors,
-            wings: [
-              { id: `w1-${towerIdRaw}`, name: "Ala Norte", towerId: towerIdRaw },
-              { id: `w2-${towerIdRaw}`, name: "Ala Sul", towerId: towerIdRaw }
-            ]
-          });
-        }
-        
-        // Extraindo informações da sala
-        const floorNumber = parseInt(row.Andar || '1');
-        const roomNumber = row.Numero || '';
-        const roomName = row.Nome || `Sala ${roomNumber}`;
-        const capacity = parseInt(row.Capacidade || '10');
-        const hasVideoConference = row.Videoconferencia === 'Sim';
-        const wingId = (row.Ala || '').toLowerCase().includes('norte') 
-          ? `w1-${towerIdRaw}` 
-          : `w2-${towerIdRaw}`;
-        
-        // Gerando ID único para a sala
-        const roomId = `room-${towerIdRaw}-${floorNumber}-${wingId}-${roomNumber}`;
-        
-        // Criando equipamentos baseado nas informações
-        const equipment = [
-          {
-            id: `eq-${roomId}-1`,
-            type: EquipmentType.AC,
-            name: "AC 1",
-            status: EquipmentStatus.WORKING,
-            lastChecked: new Date().toISOString()
-          },
-          {
-            id: `eq-${roomId}-2`,
-            type: EquipmentType.LIGHT,
-            name: "Luz 1",
-            status: EquipmentStatus.WORKING,
-            lastChecked: new Date().toISOString()
-          }
-        ];
-        
-        // Adicionando videoconferência se disponível
-        if (hasVideoConference) {
-          equipment.push({
-            id: `eq-${roomId}-3`,
-            type: EquipmentType.TV,
-            name: "TV Videoconferência",
-            status: EquipmentStatus.WORKING,
-            lastChecked: new Date().toISOString()
-          });
-        }
-        
-        // Criando o objeto da sala
-        const room: Room = {
-          id: roomId,
-          name: roomName,
-          number: roomNumber,
-          towerId: towerIdRaw,
-          floorNumber,
-          wingId,
-          capacity,
-          equipment,
-          status: RoomStatus.AVAILABLE,
-          lastInspection: undefined
-        };
-        
-        roomsData.push(room);
-      });
-      
-      // Convertendo o mapa de torres para um array
-      const towersData = Array.from(towersMap.values());
-      
-      // Chamando o callback com os dados processados
-      onImportComplete(towersData, roomsData);
-      
-      toast({
-        title: "Importação concluída",
-        description: `Foram importadas ${roomsData.length} salas de ${towersData.length} torres.`,
-      });
-      
+      // Call the callback with processed data
+      onImportComplete(towers, rooms);
     } catch (err) {
-      setError('Erro ao processar o arquivo. Verifique se o formato está correto.');
-      console.error(err);
+      console.error('Error importing file:', err);
+      setError('Ocorreu um erro ao processar o arquivo. Verifique se o formato está correto.');
     } finally {
-      setImporting(false);
+      setIsLoading(false);
     }
   };
-  
+
   return (
-    <div className="space-y-6">
-      <div className="border rounded-lg p-6 bg-background">
-        <h3 className="text-lg font-medium mb-4">Importar Dados do Excel</h3>
-        
-        <div className="space-y-4">
-          <div className="flex items-center gap-4">
-            <Input
-              type="file"
-              accept=".xlsx,.xls"
-              onChange={handleFileChange}
-              className="flex-1"
-            />
-            <Button 
-              onClick={processExcelData} 
-              disabled={!file || importing}
-              className="flex items-center gap-2"
-            >
-              {importing ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-2 border-b-transparent" />
-              ) : (
-                <Upload className="h-4 w-4" />
-              )}
-              Importar
-            </Button>
-          </div>
-          
-          {error && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Erro</AlertTitle>
-              <AlertDescription>
-                {error}
-              </AlertDescription>
-            </Alert>
-          )}
-          
-          {file && (
-            <div className="px-4 py-2 bg-muted rounded flex items-center gap-2">
-              <FileSpreadsheet className="h-5 w-5 text-muted-foreground" />
-              <span>{file.name}</span>
+    <div className="space-y-4">
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex flex-col md:flex-row md:items-center gap-4">
+            <div className="flex-1">
+              <h3 className="text-lg font-medium mb-1">Importar planilha de salas</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Selecione um arquivo Excel (.xlsx) contendo os dados das salas e torres
+              </p>
+              
+              <div className="flex gap-2">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={handleUploadClick}
+                  className="gap-2"
+                >
+                  <Upload className="h-4 w-4" />
+                  Selecionar Arquivo
+                </Button>
+                
+                <Input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".xlsx, .xls"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+                
+                <Button 
+                  onClick={handleImport} 
+                  disabled={!file || isLoading}
+                  className="gap-2"
+                >
+                  {isLoading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-b-transparent" />
+                      Processando...
+                    </>
+                  ) : (
+                    <>
+                      <FileSpreadsheet className="h-4 w-4" />
+                      Importar Dados
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
-          )}
-        </div>
-        
-        {previewData && previewData.length > 0 && (
-          <div className="mt-6">
-            <h4 className="text-sm font-medium mb-2">Prévia dos dados:</h4>
-            <div className="border rounded overflow-auto max-h-64">
-              <table className="min-w-full divide-y divide-border">
-                <thead className="bg-muted">
-                  <tr>
-                    {Object.keys(previewData[0]).map((key) => (
-                      <th key={key} className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">
-                        {key}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="bg-background divide-y divide-border">
-                  {previewData.map((row, rowIndex) => (
-                    <tr key={rowIndex}>
-                      {Object.values(row).map((cell, cellIndex) => (
-                        <td key={cellIndex} className="px-3 py-2 text-xs">
-                          {String(cell)}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              Mostrando {previewData.length} de {file ? 'aproximadamente ' + Math.ceil(file.size / 1000) + ' registros' : '0'}.
-            </p>
+            
+            {file && (
+              <Badge variant="outline" className="py-2 px-3 bg-gray-50">
+                <FileSpreadsheet className="h-4 w-4 mr-2 text-blue-500" />
+                {file.name}
+              </Badge>
+            )}
           </div>
-        )}
-      </div>
+        </CardContent>
+      </Card>
       
-      <div className="border rounded-lg p-6 bg-background">
-        <h3 className="text-lg font-medium mb-2">Instruções de Formato</h3>
-        <p className="text-sm text-muted-foreground mb-4">
-          O arquivo Excel deve conter as seguintes colunas:
-        </p>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <span className="font-medium text-sm">Torre:</span>
-              <span className="text-sm text-muted-foreground">Nome da torre (A ou B)</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="font-medium text-sm">Andar:</span>
-              <span className="text-sm text-muted-foreground">Número do andar</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="font-medium text-sm">Numero:</span>
-              <span className="text-sm text-muted-foreground">Número da sala</span>
-            </div>
-          </div>
-          
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <span className="font-medium text-sm">Nome:</span>
-              <span className="text-sm text-muted-foreground">Nome da sala (opcional)</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="font-medium text-sm">Capacidade:</span>
-              <span className="text-sm text-muted-foreground">Capacidade da sala</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="font-medium text-sm">Videoconferencia:</span>
-              <span className="text-sm text-muted-foreground">Sim ou Não</span>
-            </div>
-          </div>
-        </div>
-        
-        <Separator className="my-4" />
-        
-        <div className="text-sm text-muted-foreground">
-          <p className="mb-2">Exemplo de formato:</p>
-          <pre className="bg-muted p-2 rounded text-xs overflow-auto">
-            {`Torre | Andar | Numero | Nome         | Capacidade | Videoconferencia
-A     | 1     | 101    | Sala 101     | 15         | Sim
-A     | 1     | 102    | Sala Reunião | 8          | Não
-B     | 5     | 512    | Auditório    | 50         | Sim`}
-          </pre>
-        </div>
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Erro</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+      
+      <div className="text-sm text-muted-foreground">
+        <h4 className="font-medium text-foreground mb-2">Formato Esperado da Planilha:</h4>
+        <p>O arquivo deve conter pelo menos as seguintes colunas:</p>
+        <ul className="list-disc pl-5 mt-2 space-y-1">
+          <li>Nome da Torre</li>
+          <li>Ala</li>
+          <li>Número do Andar</li>
+          <li>Número da Sala</li>
+          <li>Nome da Sala</li>
+          <li>Capacidade</li>
+          <li>Equipamentos (opcional)</li>
+        </ul>
       </div>
     </div>
   );
+};
+
+// Lê o arquivo Excel e retorna os dados
+const readExcelFile = (file: File): Promise<any[]> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    
+    reader.onload = (e) => {
+      try {
+        const data = e.target?.result;
+        const workbook = XLSX.read(data, { type: 'binary' });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const json = XLSX.utils.sheet_to_json(sheet);
+        resolve(json as any[]);
+      } catch (error) {
+        reject(error);
+      }
+    };
+    
+    reader.onerror = (error) => {
+      reject(error);
+    };
+    
+    reader.readAsBinaryString(file);
+  });
+};
+
+// Processa os dados do Excel para o formato esperado
+const processExcelData = (data: any[]): { towers: Tower[], rooms: Room[] } => {
+  const towers: Map<string, Tower> = new Map();
+  const wings: Map<string, Wing> = new Map();
+  const rooms: Room[] = [];
+  
+  // Gerar IDs únicos
+  const generateId = () => Math.random().toString(36).substring(2, 11);
+  
+  data.forEach((row, index) => {
+    // Extrai dados da linha
+    const towerName = row.Torre || `Torre ${index % 2 === 0 ? 'A' : 'B'}`;
+    const towerId = `t${towerName.charAt(towerName.length - 1).toLowerCase()}`;
+    const wingName = row.Ala || `Ala ${Math.floor(Math.random() * 3) + 1}`;
+    const wingId = `w-${towerId}-${wingName.charAt(wingName.length - 1).toLowerCase()}`;
+    const floorNumber = row.Andar || Math.floor(Math.random() * 10) + 1;
+    const roomNumber = row.Numero || `${floorNumber}${String.fromCharCode(65 + Math.floor(Math.random() * 10))}`;
+    const roomName = row.Nome || `Sala ${roomNumber}`;
+    const capacity = row.Capacidade || Math.floor(Math.random() * 30) + 5;
+    
+    // Processa torre
+    if (!towers.has(towerId)) {
+      towers.set(towerId, {
+        id: towerId,
+        name: towerName,
+        floors: 15,
+        wings: []
+      });
+    }
+    
+    // Processa ala
+    if (!wings.has(wingId)) {
+      const wing: Wing = {
+        id: wingId,
+        name: wingName,
+        towerId: towerId
+      };
+      
+      wings.set(wingId, wing);
+      
+      const tower = towers.get(towerId);
+      if (tower && !tower.wings.some(w => w.id === wingId)) {
+        tower.wings.push(wing);
+      }
+    }
+    
+    // Gera uma lista aleatória de equipamentos
+    const equipmentList = generateRandomEquipment();
+    
+    // Cria a sala
+    const room: Room = {
+      id: generateId(),
+      name: roomName,
+      number: roomNumber,
+      towerId: towerId,
+      floorNumber: floorNumber,
+      wingId: wingId,
+      capacity: capacity,
+      equipment: equipmentList,
+      status: [RoomStatus.AVAILABLE, RoomStatus.INSPECTION_NEEDED, RoomStatus.INSPECTED][Math.floor(Math.random() * 3)]
+    };
+    
+    rooms.push(room);
+  });
+  
+  return {
+    towers: Array.from(towers.values()),
+    rooms
+  };
+};
+
+// Gera equipamentos aleatórios para uma sala
+const generateRandomEquipment = (): { id: string; type: EquipmentType; name: string; status: EquipmentStatus; }[] => {
+  const equipment = [];
+  const equipmentTypes = Object.values(EquipmentType);
+  const statuses = Object.values(EquipmentStatus);
+  
+  // Sempre inclui uma TV
+  equipment.push({
+    id: Math.random().toString(36).substring(2, 9),
+    type: EquipmentType.TV,
+    name: "TV Samsung 55\"",
+    status: EquipmentStatus.WORKING
+  });
+  
+  // Inclui alguns equipamentos aleatórios
+  const numEquipment = Math.floor(Math.random() * 4) + 2; // 2-5 equipamentos
+  
+  for (let i = 0; i < numEquipment; i++) {
+    const type = equipmentTypes[Math.floor(Math.random() * equipmentTypes.length)];
+    
+    if (!equipment.some(e => e.type === type)) {
+      equipment.push({
+        id: Math.random().toString(36).substring(2, 9),
+        type: type,
+        name: getEquipmentName(type),
+        status: statuses[Math.floor(Math.random() * statuses.length)]
+      });
+    }
+  }
+  
+  return equipment;
+};
+
+// Retorna um nome para cada tipo de equipamento
+const getEquipmentName = (type: EquipmentType): string => {
+  switch (type) {
+    case EquipmentType.TV:
+      return "Smart TV 55\"";
+    case EquipmentType.REMOTE:
+      return "Controle remoto Samsung";
+    case EquipmentType.BATTERIES:
+      return "Pilhas AA";
+    case EquipmentType.HDMI_CABLE:
+      return "Cabo HDMI 2.0";
+    case EquipmentType.MTR:
+      return "MTR Conference";
+    case EquipmentType.SWITCH_CABLE_HUB:
+      return "Hub de conexões";
+    case EquipmentType.MTOUCH:
+      return "MTouch Controller";
+    case EquipmentType.OUTLETS:
+      return "Conjunto de tomadas";
+    case EquipmentType.FILTER:
+      return "Filtro de linha";
+    case EquipmentType.MICROPHONE:
+      return "Microfone de mesa";
+    case EquipmentType.SPEAKER:
+      return "Caixa de som JBL";
+    default:
+      return "Equipamento desconhecido";
+  }
 };
