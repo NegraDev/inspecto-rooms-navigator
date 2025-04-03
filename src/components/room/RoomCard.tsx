@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -17,7 +16,10 @@ import {
   Clock, 
   Wrench,
   MonitorCheck,
-  Users
+  Users,
+  Radio,
+  Battery,
+  Volume2
 } from 'lucide-react';
 
 interface RoomCardProps {
@@ -62,20 +64,26 @@ const getEquipmentIcon = (type: EquipmentType) => {
   switch (type) {
     case EquipmentType.TV:
       return <Tv className="h-4 w-4" />;
-    case EquipmentType.AC:
-      return <Wind className="h-4 w-4" />;
-    case EquipmentType.HDMI:
+    case EquipmentType.REMOTE:
+      return <Radio className="h-4 w-4" />;
+    case EquipmentType.BATTERIES:
+      return <Battery className="h-4 w-4" />;
+    case EquipmentType.HDMI_CABLE:
       return <Cable className="h-4 w-4" />;
-    case EquipmentType.DOOR:
-      return <DoorClosed className="h-4 w-4" />;
-    case EquipmentType.WINDOW:
-      return <DoorClosed className="h-4 w-4 rotate-90" />;
-    case EquipmentType.LIGHT:
-      return <Lightbulb className="h-4 w-4" />;
+    case EquipmentType.MTR:
+      return <Tv className="h-4 w-4" />;
+    case EquipmentType.SWITCH_CABLE_HUB:
+      return <Cable className="h-4 w-4" />;
+    case EquipmentType.MTOUCH:
+      return <Radio className="h-4 w-4" />;
+    case EquipmentType.OUTLETS:
+      return <Power className="h-4 w-4" />;
     case EquipmentType.FILTER:
       return <Filter className="h-4 w-4" />;
-    case EquipmentType.OUTLET:
-      return <Power className="h-4 w-4" />;
+    case EquipmentType.MICROPHONE:
+      return <Radio className="h-4 w-4" />;
+    case EquipmentType.SPEAKER:
+      return <Volume2 className="h-4 w-4" />;
     default:
       return null;
   }
@@ -85,7 +93,6 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
   const statusColor = getStatusColor(room.status);
   const statusIcon = getStatusIcon(room.status);
   
-  // Format status text
   const statusText = {
     [RoomStatus.AVAILABLE]: "Disponível",
     [RoomStatus.OCCUPIED]: "Ocupada",

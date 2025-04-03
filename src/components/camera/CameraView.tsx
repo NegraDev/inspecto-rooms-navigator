@@ -15,7 +15,10 @@ import {
   Power, 
   Filter, 
   Wind, 
-  MessageSquare
+  MessageSquare,
+  Volume2,
+  Radio,
+  Battery
 } from 'lucide-react';
 import { Room, Equipment, EquipmentType } from '@/types';
 import { Input } from '@/components/ui/input';
@@ -125,20 +128,26 @@ export const CameraView: React.FC<CameraViewProps> = ({ room, onPhotoCaptured })
     switch (type) {
       case EquipmentType.TV:
         return <Tv width={size} height={size} />;
-      case EquipmentType.AC:
-        return <Wind width={size} height={size} />;
-      case EquipmentType.HDMI:
+      case EquipmentType.REMOTE:
+        return <Radio width={size} height={size} />;
+      case EquipmentType.BATTERIES:
+        return <Battery width={size} height={size} />;
+      case EquipmentType.HDMI_CABLE:
         return <Cable width={size} height={size} />;
-      case EquipmentType.DOOR:
-        return <DoorClosed width={size} height={size} />;
-      case EquipmentType.WINDOW:
-        return <DoorClosed width={size} height={size} className="rotate-90" />;
-      case EquipmentType.LIGHT:
-        return <Lightbulb width={size} height={size} />;
+      case EquipmentType.MTR:
+        return <Tv width={size} height={size} />;
+      case EquipmentType.SWITCH_CABLE_HUB:
+        return <Cable width={size} height={size} />;
+      case EquipmentType.MTOUCH:
+        return <Radio width={size} height={size} />;
+      case EquipmentType.OUTLETS:
+        return <Power width={size} height={size} />;
       case EquipmentType.FILTER:
         return <Filter width={size} height={size} />;
-      case EquipmentType.OUTLET:
-        return <Power width={size} height={size} />;
+      case EquipmentType.MICROPHONE:
+        return <Radio width={size} height={size} />;
+      case EquipmentType.SPEAKER:
+        return <Volume2 width={size} height={size} />;
       default:
         return null;
     }

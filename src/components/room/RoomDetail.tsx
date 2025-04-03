@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Room, Equipment, EquipmentType, EquipmentStatus } from '@/types';
 import { 
@@ -13,7 +12,10 @@ import {
   AlertTriangle,
   Wrench,
   HelpCircle,
-  Users
+  Users,
+  Radio,
+  Battery,
+  Volume2
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -29,20 +31,26 @@ const getEquipmentIcon = (type: EquipmentType) => {
   switch (type) {
     case EquipmentType.TV:
       return <Tv className="h-5 w-5" />;
-    case EquipmentType.AC:
-      return <Wind className="h-5 w-5" />;
-    case EquipmentType.HDMI:
+    case EquipmentType.REMOTE:
+      return <Radio className="h-5 w-5" />;
+    case EquipmentType.BATTERIES:
+      return <Battery className="h-5 w-5" />;
+    case EquipmentType.HDMI_CABLE:
       return <Cable className="h-5 w-5" />;
-    case EquipmentType.DOOR:
-      return <DoorClosed className="h-5 w-5" />;
-    case EquipmentType.WINDOW:
-      return <DoorClosed className="h-5 w-5 rotate-90" />;
-    case EquipmentType.LIGHT:
-      return <Lightbulb className="h-5 w-5" />;
+    case EquipmentType.MTR:
+      return <Tv className="h-5 w-5" />;
+    case EquipmentType.SWITCH_CABLE_HUB:
+      return <Cable className="h-5 w-5" />;
+    case EquipmentType.MTOUCH:
+      return <Radio className="h-5 w-5" />;
+    case EquipmentType.OUTLETS:
+      return <Power className="h-5 w-5" />;
     case EquipmentType.FILTER:
       return <Filter className="h-5 w-5" />;
-    case EquipmentType.OUTLET:
-      return <Power className="h-5 w-5" />;
+    case EquipmentType.MICROPHONE:
+      return <Radio className="h-5 w-5" />;
+    case EquipmentType.SPEAKER:
+      return <Volume2 className="h-5 w-5" />;
     default:
       return null;
   }
