@@ -1,4 +1,3 @@
-
 export enum EquipmentType {
   TV = "TV",
   REMOTE = "Controle",
@@ -139,3 +138,11 @@ export type TeamPerformance = {
   totalIssues: number;
   averageEfficiency: number;
 };
+
+export interface AwsConfig {
+  mode: 'aws' | 'local';
+  apiKey?: string;
+  userPoolId?: string;
+  clientId?: string;
+  region?: string;
+}
