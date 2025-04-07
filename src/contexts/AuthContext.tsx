@@ -9,6 +9,7 @@ export interface User {
   name: string;
   email: string;
   role: UserRole;
+  petrobrasKey?: string; // Adicionando a chave Petrobrás ao usuário
 }
 
 interface AuthContextType {
@@ -43,6 +44,7 @@ const DEMO_USERS: Record<string, User & { password: string }> = {
     email: 'admin@example.com',
     password: 'admin123',
     role: 'admin',
+    petrobrasKey: 'PBR-ADM-12345', // Adicionando chave Petrobrás para o admin
   },
   'supervisor@example.com': {
     id: '2',
@@ -50,6 +52,7 @@ const DEMO_USERS: Record<string, User & { password: string }> = {
     email: 'supervisor@example.com',
     password: 'super123',
     role: 'supervisor',
+    petrobrasKey: 'PBR-SUP-54321', // Adicionando chave Petrobrás para o supervisor
   },
   'inspector@example.com': {
     id: '3',
@@ -57,6 +60,7 @@ const DEMO_USERS: Record<string, User & { password: string }> = {
     email: 'inspector@example.com',
     password: 'insp123',
     role: 'inspector',
+    petrobrasKey: 'PBR-INS-67890', // Adicionando chave Petrobrás para o inspector
   },
   'user@example.com': {
     id: '4',
@@ -64,6 +68,7 @@ const DEMO_USERS: Record<string, User & { password: string }> = {
     email: 'user@example.com',
     password: 'user123',
     role: 'user',
+    petrobrasKey: 'PBR-USR-09876', // Adicionando chave Petrobrás para o usuário comum
   },
 };
 

@@ -1,3 +1,4 @@
+
 export enum EquipmentType {
   TV = "TV",
   REMOTE = "Controle",
@@ -145,4 +146,5 @@ export interface AwsConfig {
   userPoolId?: string;
   clientId?: string;
   region?: string;
+  apiEndpoint?: string; // Adicionando o campo apiEndpoint que estava faltando
 }

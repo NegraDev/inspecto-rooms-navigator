@@ -23,6 +23,7 @@ interface ServiceNowTicket {
   priority: 'low' | 'medium' | 'high' | 'critical';
   contactName: string;
   contactPhone?: string;
+  petrobrasKey?: string; // Adicionando o campo para a chave Petrobrás
   roomId: string;
   roomName: string;
 }
@@ -38,6 +39,7 @@ export const ServiceTicketButton: React.FC<ServiceTicketButtonProps> = ({
   const [priority, setPriority] = useState<'low' | 'medium' | 'high' | 'critical'>('medium');
   const [contactName, setContactName] = useState('');
   const [contactPhone, setContactPhone] = useState('');
+  const [petrobrasKey, setPetrobrasKey] = useState(''); // Estado para a chave Petrobrás
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [ticketCreated, setTicketCreated] = useState<{id: string, url: string} | null>(null);
   
@@ -78,6 +80,15 @@ export const ServiceTicketButton: React.FC<ServiceTicketButtonProps> = ({
       return;
     }
     
+    if (!petrobrasKey.trim()) {
+      toast({
+        title: "Erro",
+        description: "Informe a chave Petrobrás",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setIsSubmitting(true);
     
     try {
@@ -88,6 +99,7 @@ export const ServiceTicketButton: React.FC<ServiceTicketButtonProps> = ({
         priority,
         contactName,
         contactPhone: contactPhone || undefined,
+        petrobrasKey: petrobrasKey, // Incluindo a chave Petrobrás no ticket
         roomId,
         roomName
       };
@@ -168,6 +180,7 @@ export const ServiceTicketButton: React.FC<ServiceTicketButtonProps> = ({
     setPriority('medium');
     setContactName('');
     setContactPhone('');
+    setPetrobrasKey(''); // Resetando o campo da chave Petrobrás
     setTicketCreated(null);
   };
   
@@ -279,6 +292,16 @@ export const ServiceTicketButton: React.FC<ServiceTicketButtonProps> = ({
                       value={contactName}
                       onChange={(e) => setContactName(e.target.value)}
                       placeholder="Seu nome completo"
+                    />
+                  </div>
+                  
+                  <div className="grid gap-2">
+                    <Label htmlFor="petrobrasKey">Chave Petrobrás <span className="text-red-500">*</span></Label>
+                    <Input
+                      id="petrobrasKey"
+                      value={petrobrasKey}
+                      onChange={(e) => setPetrobrasKey(e.target.value)}
+                      placeholder="Informe sua chave Petrobrás"
                     />
                   </div>
                   
