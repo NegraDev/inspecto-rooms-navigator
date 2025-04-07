@@ -1,11 +1,13 @@
 
 import { useState, useCallback, useEffect } from 'react';
-import { apiService, ApiMode, AwsConfig } from '@/services/api/ApiService';
+import { apiService, ApiMode } from '@/services/api/ApiService';
 import { toast } from '@/hooks/use-toast';
+import { AwsConfig } from '@/types';
 
 interface ApiConfigHook {
   mode: ApiMode;
   configureAws: (config: AwsConfig) => Promise<boolean>;
+  updateConfig: (config: AwsConfig) => Promise<boolean>;
   useLocalMode: () => void;
   isConfigured: boolean;
   isLoading: boolean;
@@ -43,6 +45,12 @@ export function useApiConfig(): ApiConfigHook {
             try {
               const config = JSON.parse(savedConfig) as AwsConfig;
               setAwsConfig(config);
+              
+              // Validar configuração antes de aplicar
+              if (!isValidAwsConfig(config)) {
+                throw new Error('Configuração AWS incompleta ou inválida');
+              }
+              
               await apiService.configureAws(config);
               setIsConfigured(true);
               toast({
@@ -89,9 +97,29 @@ export function useApiConfig(): ApiConfigHook {
     loadConfiguration();
   }, []);
 
+  // Função para validar configuração AWS
+  const isValidAwsConfig = (config: AwsConfig): boolean => {
+    if (config.mode !== 'aws') return false;
+    
+    // Validar campos obrigatórios para AWS
+    if (!config.apiKey || config.apiKey.trim() === '') return false;
+    if (!config.region || config.region.trim() === '') return false;
+    
+    // Validação específica para Cognito
+    if (config.userPoolId && !config.clientId) return false;
+    if (!config.userPoolId && config.clientId) return false;
+    
+    return true;
+  };
+
   // Testar conexão com AWS
   const testConnection = useCallback(async (): Promise<boolean> => {
     if (mode !== 'aws' || !awsConfig) {
+      toast({
+        title: "Teste não realizado",
+        description: "Configure o modo AWS primeiro",
+        variant: "destructive"
+      });
       return false;
     }
 
@@ -106,10 +134,11 @@ export function useApiConfig(): ApiConfigHook {
       return true;
     } catch (error) {
       console.error('Erro ao testar conexão AWS:', error);
-      setError('Falha ao conectar com serviços AWS');
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+      setError(`Falha ao conectar com serviços AWS: ${errorMessage}`);
       toast({
         title: "Erro de conexão",
-        description: "Não foi possível conectar aos serviços AWS",
+        description: `Não foi possível conectar aos serviços AWS: ${errorMessage}`,
         variant: "destructive"
       });
       return false;
@@ -124,6 +153,11 @@ export function useApiConfig(): ApiConfigHook {
     setError(null);
     
     try {
+      // Validar configuração
+      if (!isValidAwsConfig(config)) {
+        throw new Error('Configuração AWS inválida ou incompleta');
+      }
+      
       await apiService.configureAws(config);
       setMode('aws');
       setAwsConfig(config);
@@ -141,11 +175,12 @@ export function useApiConfig(): ApiConfigHook {
       return true;
     } catch (error) {
       console.error('Erro ao configurar AWS:', error);
-      setError('Falha ao configurar serviços AWS');
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+      setError(`Falha ao configurar serviços AWS: ${errorMessage}`);
       
       toast({
         title: "Erro de configuração",
-        description: "Não foi possível configurar a conexão com AWS",
+        description: `Não foi possível configurar a conexão com AWS: ${errorMessage}`,
         variant: "destructive"
       });
       
@@ -154,6 +189,16 @@ export function useApiConfig(): ApiConfigHook {
       setIsLoading(false);
     }
   }, []);
+
+  // Atualizar configuração existente
+  const updateConfig = useCallback(async (config: AwsConfig): Promise<boolean> => {
+    if (config.mode === 'aws') {
+      return await configureAws(config);
+    } else {
+      useLocalMode();
+      return true;
+    }
+  }, [configureAws]);
 
   // Configurar para modo local
   const useLocalMode = useCallback(() => {
@@ -171,11 +216,14 @@ export function useApiConfig(): ApiConfigHook {
       title: "Modo local ativado",
       description: "Usando dados locais para teste e desenvolvimento"
     });
+    
+    return true;
   }, []);
 
   return {
     mode,
     configureAws,
+    updateConfig,
     useLocalMode,
     isConfigured,
     isLoading,
