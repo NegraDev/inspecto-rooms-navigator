@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Room, Equipment, EquipmentType, EquipmentStatus } from '@/types';
 import { 
@@ -22,6 +23,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useNavigate } from 'react-router-dom';
+import { ServiceTicketButton } from './ServiceTicketButton';
 
 interface RoomDetailProps {
   room: Room;
@@ -139,6 +141,12 @@ export const RoomDetail: React.FC<RoomDetailProps> = ({ room }) => {
             <Button variant="outline" className="border-gray-200">
               Gerar Relatório
             </Button>
+            
+            <ServiceTicketButton 
+              roomId={room.id}
+              roomName={room.name}
+              equipment={room.equipment}
+            />
           </div>
           
           <Separator className="my-6" />
