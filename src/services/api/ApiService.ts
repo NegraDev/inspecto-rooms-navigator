@@ -1,5 +1,4 @@
-
-import { Tower, Room, Inspection, Equipment, Inspector, Report, PerformanceReport } from '@/types';
+import { Tower, Room, Inspection, Equipment, Inspector, Report, PerformanceReport, AwsConfig } from '@/types';
 import { towers, rooms, inspectors, inspections, reports } from '@/data/mockData';
 import { dailyPerformance, weeklyPerformance, monthlyPerformance } from '@/data/performanceData';
 
@@ -7,16 +6,6 @@ import { dailyPerformance, weeklyPerformance, monthlyPerformance } from '@/data/
  * Modo de API - Local usa dados mockados, AWS usa API Gateway
  */
 export type ApiMode = 'local' | 'aws';
-
-/**
- * Configuração para conexão com AWS
- */
-export interface AwsConfig {
-  apiEndpoint: string;
-  region: string;
-  cognitoUserPoolId?: string;
-  cognitoClientId?: string;
-}
 
 /**
  * Classe responsável pela comunicação com a API
@@ -252,17 +241,29 @@ class ApiService {
 
     return { url: uploadUrl.fileUrl };
   }
+
+  /**
+   * Criar ticket de serviço (ServiceNow)
+   */
+  public async createServiceTicket(ticketData: any): Promise<{id: string, url: string}> {
+    if (this.mode === 'local') {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Gera um ID de ticket simulado
+      const ticketId = `INC${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`;
+      const ticketUrl = `https://servicenow.example.com/incident.do?id=${ticketId}`;
+      
+      console.log('Ticket criado (mock):', ticketId, ticketData);
+      
+      return {
+        id: ticketId,
+        url: ticketUrl
+      };
+    }
+    
+    return this.fetchFromAws<{id: string, url: string}>('servicenow/incidents', 'POST', ticketData);
+  }
 }
 
 // Exporta uma instância singleton do serviço
 export const apiService = new ApiService();
-
-// Exemplo de como configurar para AWS (deve ser feito durante a inicialização do app)
-/*
-apiService.configureAws({
-  apiEndpoint: 'https://api.example.com/v1',
-  region: 'us-east-1',
-  cognitoUserPoolId: 'us-east-1_abcdefg',
-  cognitoClientId: '1234567890abcdefg',
-});
-*/

@@ -17,6 +17,11 @@ import { AwsConfig } from '@/types';
 // Esquema de validação aprimorado para o formulário AWS
 const awsConfigSchema = z.object({
   mode: z.enum(['aws', 'local']),
+  apiEndpoint: z.string()
+    .optional()
+    .refine(val => val === undefined || val === '' || val?.startsWith('https://'), {
+      message: "A URL da API deve começar com https://"
+    }),
   apiKey: z.string()
     .optional()
     .refine(val => val === undefined || val === '' || val?.length > 20, {
@@ -47,6 +52,10 @@ const awsConfigSchema = z.object({
   message: "Região é obrigatória no modo AWS",
   path: ["region"]
 })
+.refine(data => data.mode !== 'aws' || (data.apiEndpoint && data.apiEndpoint.length > 0), {
+  message: "URL da API é obrigatória no modo AWS",
+  path: ["apiEndpoint"]
+})
 .refine(
   data => {
     // Se ambos estiverem vazios ou ambos preenchidos, está ok
@@ -66,6 +75,7 @@ export const AwsConfigPanel: React.FC = () => {
   // Estado para armazenar valores atuais da configuração
   const [currentConfig, setCurrentConfig] = useState<AwsConfig>({
     mode: mode || 'local',
+    apiEndpoint: '',
     apiKey: '',
     userPoolId: '',
     clientId: '',
@@ -77,6 +87,7 @@ export const AwsConfigPanel: React.FC = () => {
     resolver: zodResolver(awsConfigSchema),
     defaultValues: {
       mode: mode || 'local',
+      apiEndpoint: '',
       apiKey: '',
       userPoolId: '',
       clientId: '',
@@ -89,6 +100,7 @@ export const AwsConfigPanel: React.FC = () => {
     if (awsConfig) {
       form.reset({
         mode: awsConfig.mode,
+        apiEndpoint: awsConfig.apiEndpoint || '',
         apiKey: awsConfig.apiKey || '',
         userPoolId: awsConfig.userPoolId || '',
         clientId: awsConfig.clientId || '',
@@ -98,6 +110,7 @@ export const AwsConfigPanel: React.FC = () => {
     } else {
       form.reset({
         mode: 'local',
+        apiEndpoint: '',
         apiKey: '',
         userPoolId: '',
         clientId: '',
@@ -105,6 +118,7 @@ export const AwsConfigPanel: React.FC = () => {
       });
       setCurrentConfig({
         mode: 'local',
+        apiEndpoint: '',
         apiKey: '',
         userPoolId: '',
         clientId: '',
@@ -138,6 +152,7 @@ export const AwsConfigPanel: React.FC = () => {
         data.apiKey !== currentConfig.apiKey ||
         data.userPoolId !== currentConfig.userPoolId ||
         data.clientId !== currentConfig.clientId ||
+        data.apiEndpoint !== currentConfig.apiEndpoint ||
         data.region !== currentConfig.region;
         
       if (!hasChanges) {
@@ -148,9 +163,30 @@ export const AwsConfigPanel: React.FC = () => {
         return;
       }
       
-      const success = await updateConfig(data);
+      // Preparar a configuração completa com base no modo selecionado
+      let configToSave: AwsConfig;
+      
+      if (data.mode === 'aws') {
+        configToSave = {
+          mode: 'aws',
+          apiEndpoint: data.apiEndpoint!,  // Validação Z garantirá que isto não é undefined
+          apiKey: data.apiKey,
+          userPoolId: data.userPoolId,
+          clientId: data.clientId,
+          region: data.region!  // Validação Z garantirá que isto não é undefined
+        };
+      } else {
+        // No modo local, definimos valores padrão vazios
+        configToSave = {
+          mode: 'local',
+          apiEndpoint: '',
+          region: ''
+        };
+      }
+      
+      const success = await updateConfig(configToSave);
       if (success) {
-        setCurrentConfig(data);
+        setCurrentConfig(configToSave);
         toast({
           title: "Configurações atualizadas",
           description: `Modo alterado para: ${data.mode === 'aws' ? 'AWS' : 'Local'}`
@@ -237,6 +273,26 @@ export const AwsConfigPanel: React.FC = () => {
                   </Button>
                 )}
               </div>
+
+              <FormField
+                control={form.control}
+                name="apiEndpoint"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>URL da API <span className="text-red-500">*</span></FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="https://api.exemplo.com" 
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      URL base da API Gateway (ex: https://abc123.execute-api.us-east-1.amazonaws.com/prod)
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <FormField
                 control={form.control}

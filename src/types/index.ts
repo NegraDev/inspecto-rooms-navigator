@@ -1,4 +1,3 @@
-
 export enum EquipmentType {
   TV = "TV",
   REMOTE = "Controle",
@@ -142,9 +141,9 @@ export type TeamPerformance = {
 
 export interface AwsConfig {
   mode: 'aws' | 'local';
+  apiEndpoint: string;
   apiKey?: string;
   userPoolId?: string;
   clientId?: string;
-  region?: string;
-  apiEndpoint?: string; // Adicionando o campo apiEndpoint que estava faltando
+  region: string;
 }

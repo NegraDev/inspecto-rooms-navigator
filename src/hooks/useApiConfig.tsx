@@ -104,6 +104,7 @@ export function useApiConfig(): ApiConfigHook {
     // Validar campos obrigatórios para AWS
     if (!config.apiKey || config.apiKey.trim() === '') return false;
     if (!config.region || config.region.trim() === '') return false;
+    if (!config.apiEndpoint || config.apiEndpoint.trim() === '') return false;
     
     // Validação específica para Cognito
     if (config.userPoolId && !config.clientId) return false;
