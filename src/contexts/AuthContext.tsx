@@ -1,6 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { UserRole, UserPermission, RolePermissions } from '@/types';
+import { useApiConfig } from '@/hooks/useApiConfig';
 
 export interface User {
   id: string;
@@ -67,6 +68,7 @@ const DEMO_USERS: Record<string, { id: string; name: string; email: string; pass
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const { mode } = useApiConfig();
   
   // Verificar se existe um usuário na sessão ao carregar
   useEffect(() => {
@@ -92,9 +94,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return user.permissions.includes(permission);
   };
 
-  // Função de login
+  // Função de login adaptada para suportar AWS
   const login = async (email: string, password: string): Promise<boolean> => {
-    // Simulando uma chamada de API
+    console.log(`Tentando login com ${email} em modo ${mode}`);
+
+    // Se estivermos no modo AWS, tentar autenticar com AWS Cognito
+    if (mode === 'aws') {
+      try {
+        // Aqui seria implementada a lógica de autenticação real com AWS Cognito
+        // Por enquanto, vamos simular usando os usuários de demonstração
+        console.log('Simulando autenticação AWS para testes');
+        return simulateLogin(email, password);
+      } catch (error) {
+        console.error("Erro na autenticação AWS:", error);
+        return false;
+      }
+    } else {
+      // Modo local, usar autenticação simulada
+      return simulateLogin(email, password);
+    }
+  };
+
+  // Função que simula o login para testes
+  const simulateLogin = (email: string, password: string): Promise<boolean> => {
     return new Promise((resolve) => {
       setTimeout(() => {
         const demoUser = DEMO_USERS[email];
