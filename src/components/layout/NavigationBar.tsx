@@ -11,37 +11,40 @@ import {
   CheckSquare,
   LayoutDashboard,
   FileInput,
-  LogOut
+  LogOut,
+  Users
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { UserPermission } from '@/types';
 
 type NavItem = {
   label: string;
   icon: React.ElementType;
   href: string;
-  adminOnly?: boolean;
+  requiredPermission?: UserPermission;
 };
 
 const navItems: NavItem[] = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/" },
   { label: "Salas", icon: Grid3X3, href: "/rooms" },
   { label: "Mapa", icon: Map, href: "/map" },
-  { label: "Câmera", icon: Camera, href: "/camera" },
-  { label: "Inspeções", icon: CheckSquare, href: "/inspections" },
-  { label: "Relatórios", icon: FileText, href: "/reports" },
-  { label: "Importar", icon: FileInput, href: "/import", adminOnly: true },
-  { label: "Configurações", icon: Settings, href: "/settings" },
+  { label: "Câmera", icon: Camera, href: "/camera", requiredPermission: UserPermission.MANAGE_INSPECTIONS },
+  { label: "Inspeções", icon: CheckSquare, href: "/inspections", requiredPermission: UserPermission.VIEW_INSPECTIONS },
+  { label: "Relatórios", icon: FileText, href: "/reports", requiredPermission: UserPermission.VIEW_REPORTS },
+  { label: "Importar", icon: FileInput, href: "/import", requiredPermission: UserPermission.MANAGE_EQUIPMENT },
+  { label: "Usuários", icon: Users, href: "/users", requiredPermission: UserPermission.VIEW_USERS },
+  { label: "Configurações", icon: Settings, href: "/settings", requiredPermission: UserPermission.SYSTEM_SETTINGS },
 ];
 
 export const NavigationBar: React.FC = () => {
   const location = useLocation();
-  const { isAdmin, logout } = useAuth();
+  const { logout, hasPermission } = useAuth();
   
   return (
     <nav className="w-full md:w-56 flex flex-col">
       <div className="space-y-1 py-2">
         {navItems
-          .filter(item => !item.adminOnly || isAdmin)
+          .filter(item => !item.requiredPermission || hasPermission(item.requiredPermission))
           .map((item) => {
             const isActive = location.pathname === item.href;
             

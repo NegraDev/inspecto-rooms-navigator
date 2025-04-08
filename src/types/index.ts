@@ -1,3 +1,4 @@
+
 export enum EquipmentType {
   TV = "TV",
   REMOTE = "Controle",
@@ -147,3 +148,57 @@ export interface AwsConfig {
   clientId?: string;
   region: string;
 }
+
+// Adicionando tipos para permissões de usuários
+export enum UserPermission {
+  VIEW_INSPECTIONS = "view_inspections",
+  MANAGE_INSPECTIONS = "manage_inspections",
+  VIEW_REPORTS = "view_reports",
+  MANAGE_REPORTS = "manage_reports",
+  VIEW_ROOMS = "view_rooms",
+  MANAGE_ROOMS = "manage_rooms",
+  VIEW_EQUIPMENT = "view_equipment",
+  MANAGE_EQUIPMENT = "manage_equipment",
+  VIEW_USERS = "view_users",
+  MANAGE_USERS = "manage_users",
+  SYSTEM_SETTINGS = "system_settings"
+}
+
+export type UserRole = 'user' | 'admin' | 'inspector' | 'supervisor';
+
+// Mapeamento de papéis para permissões
+export const RolePermissions: Record<UserRole, UserPermission[]> = {
+  user: [
+    UserPermission.VIEW_ROOMS,
+    UserPermission.VIEW_REPORTS
+  ],
+  inspector: [
+    UserPermission.VIEW_ROOMS,
+    UserPermission.VIEW_REPORTS,
+    UserPermission.VIEW_INSPECTIONS,
+    UserPermission.MANAGE_INSPECTIONS
+  ],
+  supervisor: [
+    UserPermission.VIEW_ROOMS,
+    UserPermission.VIEW_REPORTS,
+    UserPermission.MANAGE_REPORTS,
+    UserPermission.VIEW_INSPECTIONS,
+    UserPermission.MANAGE_INSPECTIONS,
+    UserPermission.VIEW_EQUIPMENT,
+    UserPermission.MANAGE_EQUIPMENT,
+    UserPermission.VIEW_USERS
+  ],
+  admin: [
+    UserPermission.VIEW_ROOMS,
+    UserPermission.MANAGE_ROOMS,
+    UserPermission.VIEW_REPORTS,
+    UserPermission.MANAGE_REPORTS,
+    UserPermission.VIEW_INSPECTIONS,
+    UserPermission.MANAGE_INSPECTIONS,
+    UserPermission.VIEW_EQUIPMENT,
+    UserPermission.MANAGE_EQUIPMENT,
+    UserPermission.VIEW_USERS,
+    UserPermission.MANAGE_USERS,
+    UserPermission.SYSTEM_SETTINGS
+  ]
+};
