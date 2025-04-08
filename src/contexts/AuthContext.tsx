@@ -7,7 +7,7 @@ export interface User {
   name: string;
   email: string;
   role: UserRole;
-  petrobrasKey?: string;
+  petrobrasKey: string; // Now required for all users
   permissions: UserPermission[];
 }
 
@@ -38,14 +38,14 @@ const AuthContext = createContext<AuthContextType>({
 export const useAuth = () => useContext(AuthContext);
 
 // Usuários de demonstração (em uma aplicação real, seriam verificados no backend)
-const DEMO_USERS: Record<string, Omit<User, 'permissions'> & { password: string }> = {
+const DEMO_USERS: Record<string, { id: string; name: string; email: string; password: string; role: UserRole; petrobrasKey: string }> = {
   'admin@example.com': {
     id: '1',
     name: 'Admin',
     email: 'admin@example.com',
     password: 'admin123',
     role: 'admin',
-    petrobrasKey: 'PBR-ADM-12345',
+    petrobrasKey: 'A12B',
   },
   'supervisor@example.com': {
     id: '2',
@@ -53,7 +53,7 @@ const DEMO_USERS: Record<string, Omit<User, 'permissions'> & { password: string 
     email: 'supervisor@example.com',
     password: 'super123',
     role: 'supervisor',
-    petrobrasKey: 'PBR-SUP-54321',
+    petrobrasKey: 'S34C',
   },
   'inspector@example.com': {
     id: '3',
@@ -61,16 +61,8 @@ const DEMO_USERS: Record<string, Omit<User, 'permissions'> & { password: string 
     email: 'inspector@example.com',
     password: 'insp123',
     role: 'inspector',
-    petrobrasKey: 'PBR-INS-67890',
-  },
-  'user@example.com': {
-    id: '4',
-    name: 'Usuário Comum',
-    email: 'user@example.com',
-    password: 'user123',
-    role: 'user',
-    petrobrasKey: 'PBR-USR-09876',
-  },
+    petrobrasKey: '78D9',
+  }
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -108,15 +100,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const demoUser = DEMO_USERS[email];
         
         if (demoUser && demoUser.password === password) {
-          // Remover a senha antes de armazenar o usuário
-          const { password: _, ...userWithoutPassword } = demoUser;
-          
           // Adicionar permissões baseadas na função
           const permissions = RolePermissions[demoUser.role];
           
           // Criar usuário completo com permissões
           const userWithPermissions: User = {
-            ...userWithoutPassword,
+            id: demoUser.id,
+            name: demoUser.name,
+            email: demoUser.email,
+            role: demoUser.role,
+            petrobrasKey: demoUser.petrobrasKey,
             permissions
           };
           

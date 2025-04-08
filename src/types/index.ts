@@ -1,4 +1,3 @@
-
 export enum EquipmentType {
   TV = "TV",
   REMOTE = "Controle",
@@ -164,14 +163,10 @@ export enum UserPermission {
   SYSTEM_SETTINGS = "system_settings"
 }
 
-export type UserRole = 'user' | 'admin' | 'inspector' | 'supervisor';
+export type UserRole = 'admin' | 'inspector' | 'supervisor';
 
 // Mapeamento de papéis para permissões
 export const RolePermissions: Record<UserRole, UserPermission[]> = {
-  user: [
-    UserPermission.VIEW_ROOMS,
-    UserPermission.VIEW_REPORTS
-  ],
   inspector: [
     UserPermission.VIEW_ROOMS,
     UserPermission.VIEW_REPORTS,

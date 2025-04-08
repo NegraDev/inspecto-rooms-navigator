@@ -30,29 +30,22 @@ const demoUsers: UserData[] = [
     name: 'Admin',
     email: 'admin@example.com',
     role: 'admin',
-    petrobrasKey: 'PBR-ADM-12345',
+    petrobrasKey: 'A12B',
   },
   {
     id: '2',
     name: 'Carlos Supervisor',
     email: 'supervisor@example.com',
     role: 'supervisor',
-    petrobrasKey: 'PBR-SUP-54321',
+    petrobrasKey: 'S34C',
   },
   {
     id: '3',
     name: 'Maria Inspetora',
     email: 'inspector@example.com',
     role: 'inspector',
-    petrobrasKey: 'PBR-INS-67890',
-  },
-  {
-    id: '4',
-    name: 'Usuário Comum',
-    email: 'user@example.com',
-    role: 'user',
-    petrobrasKey: 'PBR-USR-09876',
-  },
+    petrobrasKey: '78D9',
+  }
 ];
 
 const UsersPage = () => {
@@ -62,7 +55,7 @@ const UsersPage = () => {
   const [newUser, setNewUser] = useState<Partial<UserData>>({
     name: '',
     email: '',
-    role: 'user',
+    role: 'inspector',
     petrobrasKey: '',
   });
   
@@ -79,6 +72,17 @@ const UsersPage = () => {
       return;
     }
     
+    // Validar o formato da chave Petrobrás
+    const petrobrasKeyRegex = /^[A-Za-z0-9]{4}$/;
+    if (!petrobrasKeyRegex.test(newUser.petrobrasKey)) {
+      toast({
+        title: "Erro",
+        description: "A chave Petrobrás deve conter exatamente 4 caracteres alfanuméricos",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     const newUserData = {
       ...newUser,
       id: `${users.length + 1}`, // Em uma aplicação real, seria gerado pelo backend
@@ -89,7 +93,7 @@ const UsersPage = () => {
     setNewUser({
       name: '',
       email: '',
-      role: 'user',
+      role: 'inspector',
       petrobrasKey: '',
     });
     
@@ -178,7 +182,6 @@ const UsersPage = () => {
                         {user.role === 'admin' && 'Administrador'}
                         {user.role === 'supervisor' && 'Supervisor'}
                         {user.role === 'inspector' && 'Inspetor'}
-                        {user.role === 'user' && 'Usuário'}
                       </Badge>
                     </TableCell>
                     <TableCell>{user.petrobrasKey}</TableCell>
@@ -215,7 +218,7 @@ const UsersPage = () => {
       </div>
       
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[550px]">
           <DialogHeader>
             <DialogTitle>Adicionar Novo Usuário</DialogTitle>
             <DialogDescription>
@@ -253,12 +256,19 @@ const UsersPage = () => {
               <Label htmlFor="petrobrasKey" className="text-right">
                 Chave Petrobrás
               </Label>
-              <Input
-                id="petrobrasKey"
-                value={newUser.petrobrasKey}
-                onChange={(e) => setNewUser({...newUser, petrobrasKey: e.target.value})}
-                className="col-span-3"
-              />
+              <div className="col-span-3 space-y-1">
+                <Input
+                  id="petrobrasKey"
+                  value={newUser.petrobrasKey}
+                  onChange={(e) => setNewUser({...newUser, petrobrasKey: e.target.value.toUpperCase()})}
+                  maxLength={4}
+                  placeholder="4 caracteres alfanuméricos"
+                  className="uppercase"
+                />
+                <p className="text-xs text-muted-foreground">
+                  A chave deve conter exatamente 4 caracteres (letras e números).
+                </p>
+              </div>
             </div>
             
             <div className="grid grid-cols-4 items-center gap-4">
@@ -273,7 +283,6 @@ const UsersPage = () => {
                   <SelectValue placeholder="Selecione uma função" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="user">Usuário</SelectItem>
                   <SelectItem value="inspector">Inspetor</SelectItem>
                   <SelectItem value="supervisor">Supervisor</SelectItem>
                   <SelectItem value="admin">Administrador</SelectItem>

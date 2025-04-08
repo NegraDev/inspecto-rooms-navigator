@@ -94,7 +94,8 @@ const LoginPage = () => {
               <div className="text-sm text-muted-foreground">
                 <p>Usuários para teste:</p>
                 <p>Admin: admin@example.com / admin123</p>
-                <p>Usuário: user@example.com / user123</p>
+                <p>Supervisor: supervisor@example.com / super123</p>
+                <p>Inspetor: inspector@example.com / insp123</p>
               </div>
             </CardContent>
             

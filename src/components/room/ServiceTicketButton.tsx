@@ -10,6 +10,7 @@ import { Equipment, EquipmentStatus } from '@/types';
 import { toast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { useApiConfig } from '@/hooks/useApiConfig';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface ServiceTicketButtonProps {
   roomId: string;
@@ -23,7 +24,7 @@ interface ServiceNowTicket {
   priority: 'low' | 'medium' | 'high' | 'critical';
   contactName: string;
   contactPhone?: string;
-  petrobrasKey?: string; // Adicionando o campo para a chave Petrobrás
+  petrobrasKey: string;
   roomId: string;
   roomName: string;
 }
@@ -33,13 +34,14 @@ export const ServiceTicketButton: React.FC<ServiceTicketButtonProps> = ({
   roomName,
   equipment
 }) => {
+  const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [selectedEquipment, setSelectedEquipment] = useState<string>('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<'low' | 'medium' | 'high' | 'critical'>('medium');
-  const [contactName, setContactName] = useState('');
+  const [contactName, setContactName] = useState(user?.name || '');
   const [contactPhone, setContactPhone] = useState('');
-  const [petrobrasKey, setPetrobrasKey] = useState(''); // Estado para a chave Petrobrás
+  const [petrobrasKey, setPetrobrasKey] = useState(user?.petrobrasKey || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [ticketCreated, setTicketCreated] = useState<{id: string, url: string} | null>(null);
   
@@ -89,6 +91,17 @@ export const ServiceTicketButton: React.FC<ServiceTicketButtonProps> = ({
       return;
     }
     
+    // Validar formato da chave Petrobrás (4 caracteres alfanuméricos)
+    const petrobrasKeyRegex = /^[A-Za-z0-9]{4}$/;
+    if (!petrobrasKeyRegex.test(petrobrasKey)) {
+      toast({
+        title: "Erro",
+        description: "A chave Petrobrás deve conter exatamente 4 caracteres alfanuméricos",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setIsSubmitting(true);
     
     try {
@@ -99,7 +112,7 @@ export const ServiceTicketButton: React.FC<ServiceTicketButtonProps> = ({
         priority,
         contactName,
         contactPhone: contactPhone || undefined,
-        petrobrasKey: petrobrasKey, // Incluindo a chave Petrobrás no ticket
+        petrobrasKey: petrobrasKey,
         roomId,
         roomName
       };
@@ -178,9 +191,9 @@ export const ServiceTicketButton: React.FC<ServiceTicketButtonProps> = ({
     setSelectedEquipment('');
     setDescription('');
     setPriority('medium');
-    setContactName('');
+    setContactName(user?.name || '');
     setContactPhone('');
-    setPetrobrasKey(''); // Resetando o campo da chave Petrobrás
+    setPetrobrasKey(user?.petrobrasKey || '');
     setTicketCreated(null);
   };
   
@@ -301,8 +314,12 @@ export const ServiceTicketButton: React.FC<ServiceTicketButtonProps> = ({
                       id="petrobrasKey"
                       value={petrobrasKey}
                       onChange={(e) => setPetrobrasKey(e.target.value)}
-                      placeholder="Informe sua chave Petrobrás"
+                      placeholder="4 caracteres alfanuméricos"
+                      maxLength={4}
                     />
+                    <p className="text-xs text-muted-foreground">
+                      A chave Petrobrás deve conter exatamente 4 caracteres alfanuméricos.
+                    </p>
                   </div>
                   
                   <div className="grid gap-2">
