@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Plus, Loader2, ExternalLink, Wrench, Armchair, AirVent } from 'lucide-react';
-import { Equipment, EquipmentStatus, OfferType } from '@/types';
+import { Equipment, EquipmentStatus, OfferType, ServiceTicketData } from '@/types';
 import { toast } from '@/hooks/use-toast';
 import { useApiConfig } from '@/hooks/useApiConfig';
 import { useAuth } from '@/contexts/AuthContext';
@@ -29,19 +29,15 @@ export const ServiceTicketButton: React.FC<ServiceTicketButtonProps> = ({
   const [priority, setPriority] = useState<'low' | 'medium' | 'high' | 'critical'>('medium');
   const [contactName, setContactName] = useState(user?.name || '');
   const [petrobrasKey, setPetrobrasKey] = useState(user?.petrobrasKey || '');
+  const [contactPhone, setContactPhone] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [ticketCreated, setTicketCreated] = useState<{id: string, url: string} | null>(null);
   
   const { mode } = useApiConfig();
 
-  const getOfferIcon = (type: OfferType) => {
-    switch (type) {
-      case OfferType.CHAIRS:
-        return <Armchair className="h-4 w-4" />;
-      case OfferType.AIR_CONDITIONING:
-        return <AirVent className="h-4 w-4" />;
-      default:
-        return <Wrench className="h-4 w-4" />;
+  const openServiceNow = () => {
+    if (ticketCreated?.url) {
+      window.open(ticketCreated.url, '_blank');
     }
   };
 
@@ -95,7 +91,7 @@ export const ServiceTicketButton: React.FC<ServiceTicketButtonProps> = ({
     setIsSubmitting(true);
     
     try {
-      const ticketData: ServiceNowTicket = {
+      const ticketData: ServiceTicketData = {
         equipmentId: selectedOffer,
         description,
         priority,
