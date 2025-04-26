@@ -8,7 +8,7 @@ export interface User {
   name: string;
   email: string;
   role: UserRole;
-  petrobrasKey: string; // Now required for all users
+  petrobrasKey: string;
   permissions: UserPermission[];
 }
 
@@ -19,7 +19,7 @@ interface AuthContextType {
   isSupervisor: boolean;
   isInspector: boolean;
   hasPermission: (permission: UserPermission) => boolean;
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (emailOrKey: string, password: string, isUsingKey?: boolean) => Promise<boolean>;
   logout: () => void;
 }
 
@@ -66,6 +66,13 @@ const DEMO_USERS: Record<string, { id: string; name: string; email: string; pass
   }
 };
 
+// Índice adicional para buscar usuários pela chave Petrobras
+const PETROBRAS_KEY_INDEX: Record<string, string> = {
+  'A12B': 'admin@example.com',
+  'S34C': 'supervisor@example.com',
+  '78D9': 'inspector@example.com'
+};
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const { mode } = useApiConfig();
@@ -94,9 +101,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return user.permissions.includes(permission);
   };
 
-  // Função de login adaptada para suportar AWS
-  const login = async (email: string, password: string): Promise<boolean> => {
-    console.log(`Tentando login com ${email} em modo ${mode}`);
+  // Função de login adaptada para suportar login por email ou chave Petrobras
+  const login = async (emailOrKey: string, password: string, isUsingKey: boolean = false): Promise<boolean> => {
+    console.log(`Tentando login com ${isUsingKey ? 'chave Petrobras' : 'email'}: ${emailOrKey} em modo ${mode}`);
 
     // Se estivermos no modo AWS, tentar autenticar com AWS Cognito
     if (mode === 'aws') {
@@ -104,22 +111,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Aqui seria implementada a lógica de autenticação real com AWS Cognito
         // Por enquanto, vamos simular usando os usuários de demonstração
         console.log('Simulando autenticação AWS para testes');
-        return simulateLogin(email, password);
+        return simulateLogin(emailOrKey, password, isUsingKey);
       } catch (error) {
         console.error("Erro na autenticação AWS:", error);
         return false;
       }
     } else {
       // Modo local, usar autenticação simulada
-      return simulateLogin(email, password);
+      return simulateLogin(emailOrKey, password, isUsingKey);
     }
   };
 
   // Função que simula o login para testes
-  const simulateLogin = (email: string, password: string): Promise<boolean> => {
+  const simulateLogin = (emailOrKey: string, password: string, isUsingKey: boolean): Promise<boolean> => {
     return new Promise((resolve) => {
       setTimeout(() => {
-        const demoUser = DEMO_USERS[email];
+        // Determina o email do usuário com base no método de login
+        let userEmail = emailOrKey;
+        
+        // Se estiver usando a chave Petrobras, busca o email correspondente
+        if (isUsingKey) {
+          userEmail = PETROBRAS_KEY_INDEX[emailOrKey];
+          // Se não encontrar a chave, falha o login
+          if (!userEmail) {
+            resolve(false);
+            return;
+          }
+        }
+        
+        const demoUser = DEMO_USERS[userEmail];
         
         if (demoUser && demoUser.password === password) {
           // Adicionar permissões baseadas na função

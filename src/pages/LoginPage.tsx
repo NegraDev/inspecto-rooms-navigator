@@ -12,11 +12,13 @@ import { LogIn, Info, AlertCircle } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useApiConfig } from '@/hooks/useApiConfig';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [petrobrasKey, setPetrobrasKey] = useState('');
+  const [password, setPassword] = useState('');
+  const [loginMethod, setLoginMethod] = useState<'email' | 'key'>('email');
   const [isLoading, setIsLoading] = useState(false);
   const [showTestInfo, setShowTestInfo] = useState(false);
   const { login } = useAuth();
@@ -32,39 +34,51 @@ const LoginPage = () => {
     setIsLoading(true);
     
     try {
-      // Validar formato da chave Petrobras quando informada
-      if (petrobrasKey && !/^[A-Za-z0-9]{4}$/.test(petrobrasKey)) {
-        toast({
-          title: "Formato inválido",
-          description: "A chave Petrobras deve ter 4 caracteres alfanuméricos",
-          variant: "destructive",
-        });
-        setIsLoading(false);
-        return;
-      }
-
-      const loginData = {
-        email,
-        password,
-        ...(petrobrasKey ? { petrobrasKey } : {})
-      };
-
-      // No modo AWS, passaríamos os dados para um serviço de autenticação real
-      // Por enquanto, usamos o login simulado com os dados de teste
-      const success = await login(email, password);
-      
-      if (success) {
-        toast({
-          title: "Login realizado com sucesso",
-          description: "Bem-vindo de volta!",
-        });
-        navigate(from);
+      if (loginMethod === 'key') {
+        // Validar formato da chave Petrobras
+        if (!/^[A-Za-z0-9]{4}$/.test(petrobrasKey)) {
+          toast({
+            title: "Formato inválido",
+            description: "A chave Petrobras deve ter 4 caracteres alfanuméricos",
+            variant: "destructive",
+          });
+          setIsLoading(false);
+          return;
+        }
+        
+        // Login com chave Petrobras
+        const success = await login(petrobrasKey, password, true);
+        
+        if (success) {
+          toast({
+            title: "Login realizado com sucesso",
+            description: "Bem-vindo de volta!",
+          });
+          navigate(from);
+        } else {
+          toast({
+            title: "Erro de login",
+            description: "Chave Petrobras ou senha incorretos",
+            variant: "destructive",
+          });
+        }
       } else {
-        toast({
-          title: "Erro de login",
-          description: "Email ou senha incorretos",
-          variant: "destructive",
-        });
+        // Login com email
+        const success = await login(email, password);
+        
+        if (success) {
+          toast({
+            title: "Login realizado com sucesso",
+            description: "Bem-vindo de volta!",
+          });
+          navigate(from);
+        } else {
+          toast({
+            title: "Erro de login",
+            description: "Email ou senha incorretos",
+            variant: "destructive",
+          });
+        }
       }
     } catch (error) {
       console.error("Erro no login:", error);
@@ -110,7 +124,7 @@ const LoginPage = () => {
           
           <Tabs defaultValue="credentials">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="credentials">Credenciais</TabsTrigger>
+              <TabsTrigger value="credentials">Login</TabsTrigger>
               <TabsTrigger value="testInfo" onClick={() => setShowTestInfo(true)}>
                 Informações de Teste
               </TabsTrigger>
@@ -120,16 +134,50 @@ const LoginPage = () => {
               <form onSubmit={handleSubmit}>
                 <CardContent className="space-y-4 pt-4">
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="seu.email@example.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                    />
+                    <Label>Método de login</Label>
+                    <RadioGroup 
+                      defaultValue="email" 
+                      value={loginMethod}
+                      onValueChange={(value) => setLoginMethod(value as 'email' | 'key')}
+                      className="flex flex-row gap-4"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="email" id="email-option" />
+                        <Label htmlFor="email-option">Email Corporativo</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="key" id="key-option" />
+                        <Label htmlFor="key-option">Chave Petrobras</Label>
+                      </div>
+                    </RadioGroup>
                   </div>
+                  
+                  {loginMethod === 'email' ? (
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="seu.email@example.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                      />
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <Label htmlFor="petrobrasKey">Chave Petrobras</Label>
+                      <Input
+                        id="petrobrasKey"
+                        placeholder="Ex: A12B"
+                        value={petrobrasKey}
+                        onChange={(e) => setPetrobrasKey(e.target.value.toUpperCase())}
+                        maxLength={4}
+                        required
+                      />
+                      <p className="text-xs text-muted-foreground">4 caracteres alfanuméricos</p>
+                    </div>
+                  )}
                   
                   <div className="space-y-2">
                     <Label htmlFor="password">Senha</Label>
@@ -139,19 +187,6 @@ const LoginPage = () => {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="petrobrasKey">
-                      Chave Petrobras <span className="text-xs text-muted-foreground">(4 caracteres alfanuméricos)</span>
-                    </Label>
-                    <Input
-                      id="petrobrasKey"
-                      placeholder="Ex: A12B"
-                      value={petrobrasKey}
-                      onChange={(e) => setPetrobrasKey(e.target.value.toUpperCase())}
-                      maxLength={4}
                     />
                   </div>
                 </CardContent>

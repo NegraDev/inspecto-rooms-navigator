@@ -4,16 +4,35 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { CameraView } from '@/components/camera/CameraView';
 import { rooms } from '@/data/mockData';
-import { Room, Photo } from '@/types';
+import { Room, Photo, EquipmentStatus } from '@/types';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Save, Check } from 'lucide-react';
+import { ArrowLeft, Save, Check, AlertTriangle } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+
+// Define photo types that are required for inspection
+enum RequiredPhotoType {
+  DOOR_PLATE = 'door_plate',
+  ENVIRONMENT = 'environment',
+  EQUIPMENT = 'equipment' // HDMI/MTOuch/Microphone
+}
+
+// Extended Photo type to include required photo type
+interface ExtendedPhoto extends Photo {
+  photoType?: RequiredPhotoType;
+  equipmentWorking?: boolean;
+}
 
 const CameraPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [room, setRoom] = useState<Room | null>(null);
-  const [photos, setPhotos] = useState<Photo[]>([]);
+  const [photos, setPhotos] = useState<ExtendedPhoto[]>([]);
+  
+  // Track required photo types
+  const [doorPlateTaken, setDoorPlateTaken] = useState(false);
+  const [environmentTaken, setEnvironmentTaken] = useState(false);
+  const [equipmentTaken, setEquipmentTaken] = useState(false);
   
   // Parse query params to get roomId
   useEffect(() => {
@@ -28,19 +47,46 @@ const CameraPage = () => {
     }
   }, [location.search]);
   
-  const handlePhotoCaptured = (photoData: string, caption: string, equipmentId?: string) => {
-    const newPhoto: Photo = {
+  const handlePhotoCaptured = (
+    photoData: string, 
+    caption: string, 
+    equipmentId?: string, 
+    photoType?: RequiredPhotoType,
+    equipmentWorking: boolean = true
+  ) => {
+    const newPhoto: ExtendedPhoto = {
       id: `photo-${Date.now()}`,
       url: photoData,
       caption: caption || undefined,
       equipmentId: equipmentId,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      photoType,
+      equipmentWorking
     };
     
     setPhotos(prev => [...prev, newPhoto]);
+    
+    // Track required photos
+    if (photoType === RequiredPhotoType.DOOR_PLATE) {
+      setDoorPlateTaken(true);
+    } else if (photoType === RequiredPhotoType.ENVIRONMENT) {
+      setEnvironmentTaken(true);
+    } else if (photoType === RequiredPhotoType.EQUIPMENT) {
+      setEquipmentTaken(true);
+    }
   };
   
   const handleSaveInspection = () => {
+    // Check for required photos
+    if (!doorPlateTaken || !environmentTaken || !equipmentTaken) {
+      toast({
+        title: "Fotos obrigatórias pendentes",
+        description: "Você precisa tirar todas as fotos obrigatórias antes de salvar a inspeção.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     // Here you would normally save the inspection to a database
     // For this demo, we'll just show a success toast
     
@@ -56,6 +102,10 @@ const CameraPage = () => {
       navigate('/inspections');
     }
   };
+
+  // Calculate how many required photos have been taken
+  const totalRequiredPhotosTaken = [doorPlateTaken, environmentTaken, equipmentTaken].filter(Boolean).length;
+  const allRequiredPhotosTaken = totalRequiredPhotosTaken === 3;
   
   return (
     <PageLayout>
@@ -83,16 +133,33 @@ const CameraPage = () => {
             </div>
           </div>
           
-          {photos.length > 0 && (
+          <div className="flex items-center gap-2">
+            <div className="text-sm">
+              <span className="font-medium">Fotos obrigatórias:</span>
+              <span className={`ml-1 ${allRequiredPhotosTaken ? 'text-green-600' : 'text-orange-500'}`}>
+                {totalRequiredPhotosTaken}/3
+              </span>
+            </div>
+            
             <Button
               onClick={handleSaveInspection}
-              className="bg-primary hover:bg-primary/90 text-white flex items-center gap-2"
+              className={`${photos.length > 0 ? 'bg-primary hover:bg-primary/90' : 'bg-gray-300 cursor-not-allowed'} text-white flex items-center gap-2`}
+              disabled={photos.length === 0}
             >
               <Save className="h-4 w-4" />
               <span>Salvar Inspeção</span>
             </Button>
-          )}
+          </div>
         </div>
+
+        {!allRequiredPhotosTaken && photos.length > 0 && (
+          <Alert className="bg-amber-50 border-amber-200 text-amber-800">
+            <AlertTriangle className="h-4 w-4 text-amber-600" />
+            <AlertDescription>
+              Você precisa tirar as 3 fotos obrigatórias antes de salvar a inspeção.
+            </AlertDescription>
+          </Alert>
+        )}
         
         <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
           <div className="md:col-span-3">
@@ -139,47 +206,88 @@ const CameraPage = () => {
                 </div>
               ) : (
                 <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
-                  {photos.map(photo => (
-                    <div 
-                      key={photo.id} 
-                      className="flex gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100"
-                    >
-                      <div className="w-20 h-20 bg-gray-200 rounded-md overflow-hidden flex-shrink-0">
-                        <img 
-                          src={photo.url} 
-                          alt={photo.caption || "Foto capturada"} 
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      
-                      <div className="flex-1">
-                        <div className="flex items-start justify-between">
-                          <div className="font-medium text-sm">
-                            {photo.caption || "Sem descrição"}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {new Date(photo.timestamp).toLocaleTimeString()}
-                          </div>
+                  {photos.map(photo => {
+                    const photoTypeLabel = photo.photoType && {
+                      [RequiredPhotoType.DOOR_PLATE]: 'Porta/Placa',
+                      [RequiredPhotoType.ENVIRONMENT]: 'Ambiente',
+                      [RequiredPhotoType.EQUIPMENT]: 'Equipamento'
+                    }[photo.photoType];
+                    
+                    return (
+                      <div 
+                        key={photo.id} 
+                        className="flex gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100"
+                      >
+                        <div className="w-20 h-20 bg-gray-200 rounded-md overflow-hidden flex-shrink-0">
+                          <img 
+                            src={photo.url} 
+                            alt={photo.caption || "Foto capturada"} 
+                            className="w-full h-full object-cover"
+                          />
                         </div>
                         
-                        {photo.equipmentId && room && (
-                          <div className="text-xs text-muted-foreground mt-1">
-                            Equipamento: {
-                              room.equipment.find(e => e.id === photo.equipmentId)?.name ||
-                              "Desconhecido"
-                            }
+                        <div className="flex-1">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <div className="font-medium text-sm">
+                                {photo.caption || "Sem descrição"}
+                              </div>
+                              {photoTypeLabel && (
+                                <span className="inline-flex items-center bg-blue-50 text-blue-700 text-xs px-2 py-0.5 rounded-full">
+                                  {photoTypeLabel}
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {new Date(photo.timestamp).toLocaleTimeString()}
+                            </div>
                           </div>
-                        )}
-                        
-                        <div className="mt-2">
-                          <span className="inline-flex items-center gap-1 text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
-                            <Check className="h-3 w-3" />
-                            <span>Salva</span>
-                          </span>
+                          
+                          {photo.equipmentId && room && (
+                            <div className="mt-1">
+                              <div className="text-xs text-muted-foreground">
+                                Equipamento: {
+                                  room.equipment.find(e => e.id === photo.equipmentId)?.name ||
+                                  "Desconhecido"
+                                }
+                              </div>
+                              
+                              {photo.equipmentWorking !== undefined && (
+                                <div className="mt-1">
+                                  <span 
+                                    className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full ${
+                                      photo.equipmentWorking 
+                                        ? 'text-green-600 bg-green-50' 
+                                        : 'text-red-600 bg-red-50'
+                                    }`}
+                                  >
+                                    {photo.equipmentWorking ? (
+                                      <>
+                                        <Check className="h-3 w-3" />
+                                        <span>Funcionando</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <AlertTriangle className="h-3 w-3" />
+                                        <span>Com defeito</span>
+                                      </>
+                                    )}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                          
+                          <div className="mt-2">
+                            <span className="inline-flex items-center gap-1 text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
+                              <Check className="h-3 w-3" />
+                              <span>Salva</span>
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>

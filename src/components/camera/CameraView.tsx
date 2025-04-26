@@ -1,5 +1,4 @@
-
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
@@ -18,17 +17,34 @@ import {
   MessageSquare,
   Volume2,
   Radio,
-  Battery
+  Battery,
+  AlertTriangle
 } from 'lucide-react';
 import { Room, Equipment, EquipmentType } from '@/types';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/components/ui/use-toast';
+import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+
+enum RequiredPhotoType {
+  DOOR_PLATE = 'door_plate',
+  ENVIRONMENT = 'environment',
+  EQUIPMENT = 'equipment'
+}
+
+interface RequiredPhoto {
+  type: RequiredPhotoType;
+  label: string;
+  description: string;
+  taken: boolean;
+  photoId?: string;
+}
 
 interface CameraViewProps {
   room?: Room;
-  onPhotoCaptured: (photoData: string, caption: string, equipmentId?: string) => void;
+  onPhotoCaptured: (photoData: string, caption: string, equipmentId?: string, photoType?: RequiredPhotoType) => void;
 }
 
 export const CameraView: React.FC<CameraViewProps> = ({ room, onPhotoCaptured }) => {
@@ -37,6 +53,29 @@ export const CameraView: React.FC<CameraViewProps> = ({ room, onPhotoCaptured })
   const [photoTaken, setPhotoTaken] = useState(false);
   const [selectedEquipment, setSelectedEquipment] = useState<Equipment | null>(null);
   const [noteText, setNoteText] = useState('');
+  const [equipmentWorking, setEquipmentWorking] = useState(true);
+  const [selectedPhotoType, setSelectedPhotoType] = useState<RequiredPhotoType | null>(null);
+  
+  const [requiredPhotos, setRequiredPhotos] = useState<RequiredPhoto[]>([
+    { 
+      type: RequiredPhotoType.DOOR_PLATE, 
+      label: 'Porta/Placa', 
+      description: 'Foto da porta e placa de identificação da sala',
+      taken: false
+    },
+    { 
+      type: RequiredPhotoType.ENVIRONMENT, 
+      label: 'Ambiente Geral', 
+      description: 'Visão geral do ambiente da sala',
+      taken: false
+    },
+    { 
+      type: RequiredPhotoType.EQUIPMENT, 
+      label: 'HDMI/MTOuch/Microfone', 
+      description: 'Detalhes dos equipamentos principais',
+      taken: false
+    }
+  ]);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -78,17 +117,13 @@ export const CameraView: React.FC<CameraViewProps> = ({ room, onPhotoCaptured })
     if (canvasRef.current && videoRef.current) {
       const context = canvasRef.current.getContext('2d');
       
-      // Set canvas dimensions to match video
       canvasRef.current.width = videoRef.current.videoWidth;
       canvasRef.current.height = videoRef.current.videoHeight;
       
-      // Draw video frame to canvas
       context?.drawImage(videoRef.current, 0, 0, canvasRef.current.width, canvasRef.current.height);
       
-      // Convert canvas to data URL
       const photoData = canvasRef.current.toDataURL('image/png');
       
-      // Display the photo
       if (photoRef.current) {
         photoRef.current.src = photoData;
         setPhotoTaken(true);
@@ -102,16 +137,31 @@ export const CameraView: React.FC<CameraViewProps> = ({ room, onPhotoCaptured })
   
   const savePhoto = () => {
     if (photoRef.current && photoRef.current.src) {
+      const photoId = `photo-${Date.now()}`;
+      
       onPhotoCaptured(
         photoRef.current.src, 
         noteText,
-        selectedEquipment ? selectedEquipment.id : undefined
+        selectedEquipment ? selectedEquipment.id : undefined,
+        selectedPhotoType
       );
       
-      // Reset the state
+      if (selectedPhotoType) {
+        setRequiredPhotos(prev => prev.map(photo => 
+          photo.type === selectedPhotoType 
+            ? { ...photo, taken: true, photoId } 
+            : photo
+        ));
+      }
+      
       setPhotoTaken(false);
       setNoteText('');
-      setSelectedEquipment(null);
+      
+      if (!selectedPhotoType) {
+        setSelectedEquipment(null);
+      }
+      
+      setSelectedPhotoType(null);
       
       toast({
         title: "Foto salva com sucesso",
@@ -122,6 +172,15 @@ export const CameraView: React.FC<CameraViewProps> = ({ room, onPhotoCaptured })
   
   const handleEquipmentSelect = (equipment: Equipment) => {
     setSelectedEquipment(equipment);
+    setSelectedPhotoType(null);
+  };
+
+  const handleRequiredPhotoSelect = (photoType: RequiredPhotoType) => {
+    setSelectedPhotoType(photoType);
+    
+    if (photoType !== RequiredPhotoType.EQUIPMENT) {
+      setSelectedEquipment(null);
+    }
   };
   
   const getEquipmentIcon = (type: EquipmentType, size = 16) => {
@@ -152,14 +211,28 @@ export const CameraView: React.FC<CameraViewProps> = ({ room, onPhotoCaptured })
         return null;
     }
   };
+
+  const getRequiredPhotoIcon = (type: RequiredPhotoType, size = 16) => {
+    switch (type) {
+      case RequiredPhotoType.DOOR_PLATE:
+        return <DoorClosed width={size} height={size} />;
+      case RequiredPhotoType.ENVIRONMENT:
+        return <ImageIcon width={size} height={size} />;
+      case RequiredPhotoType.EQUIPMENT:
+        return <Cable width={size} height={size} />;
+      default:
+        return null;
+    }
+  };
+
+  const completedPhotos = requiredPhotos.filter(p => p.taken).length;
+  const totalRequiredPhotos = requiredPhotos.length;
   
   React.useEffect(() => {
-    // Auto-start camera when component mounts and tab is 'camera'
     if (activeTab === 'camera') {
       startCamera();
     }
     
-    // Clean up on component unmount
     return () => {
       stopCamera();
     };
@@ -168,18 +241,48 @@ export const CameraView: React.FC<CameraViewProps> = ({ room, onPhotoCaptured })
   return (
     <div className="flex flex-col h-full">
       <Tabs defaultValue="camera" value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="w-full grid grid-cols-2">
+        <TabsList className="w-full grid grid-cols-1">
           <TabsTrigger value="camera" className="flex items-center gap-2">
             <Camera className="h-4 w-4" />
             <span>Câmera</span>
           </TabsTrigger>
-          <TabsTrigger value="upload" className="flex items-center gap-2">
-            <UploadCloud className="h-4 w-4" />
-            <span>Upload</span>
-          </TabsTrigger>
         </TabsList>
         
         <TabsContent value="camera" className="flex-1">
+          <div className="bg-gray-100 p-2 mb-3 rounded-md">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-medium">Fotos Obrigatórias</h3>
+              <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-md">
+                {completedPhotos}/{totalRequiredPhotos}
+              </span>
+            </div>
+            
+            <div className="grid grid-cols-3 gap-2 mt-2">
+              {requiredPhotos.map((photo) => (
+                <Button
+                  key={photo.type}
+                  onClick={() => handleRequiredPhotoSelect(photo.type)}
+                  variant={photo.taken ? "default" : "outline"}
+                  className={`h-auto py-2 justify-start flex-col items-start ${
+                    selectedPhotoType === photo.type ? 'ring-2 ring-primary' : ''
+                  } ${
+                    photo.taken 
+                      ? 'bg-green-600 hover:bg-green-700 text-white' 
+                      : 'bg-white hover:bg-gray-100'
+                  }`}
+                >
+                  <div className="flex items-center w-full justify-between mb-1">
+                    <span className="flex items-center">
+                      {getRequiredPhotoIcon(photo.type)}
+                      <span className="ml-1 text-sm">{photo.label}</span>
+                    </span>
+                    {photo.taken && <Check className="h-4 w-4" />}
+                  </div>
+                </Button>
+              ))}
+            </div>
+          </div>
+
           <div className="relative bg-black rounded-md overflow-hidden aspect-[3/4] mb-4">
             {!photoTaken ? (
               <>
@@ -194,12 +297,26 @@ export const CameraView: React.FC<CameraViewProps> = ({ room, onPhotoCaptured })
                   <div className="absolute top-0 left-0 right-0 bg-black/50 backdrop-blur-sm text-white p-3 flex items-center">
                     <div className="flex-1">
                       <h3 className="text-sm font-medium">{room.name}</h3>
-                      <p className="text-xs opacity-80">{`Andar ${room.floorNumber} • ${selectedEquipment ? selectedEquipment.name : 'Visão geral'}`}</p>
+                      <p className="text-xs opacity-80">
+                        {`Andar ${room.floorNumber} • ${
+                          selectedPhotoType 
+                            ? requiredPhotos.find(p => p.type === selectedPhotoType)?.label 
+                            : selectedEquipment 
+                              ? selectedEquipment.name 
+                              : 'Visão geral'
+                        }`}
+                      </p>
                     </div>
                     
                     {selectedEquipment && (
                       <div className="flex items-center justify-center h-8 w-8 rounded-full bg-white/10">
                         {getEquipmentIcon(selectedEquipment.type, 18)}
+                      </div>
+                    )}
+                    
+                    {selectedPhotoType && !selectedEquipment && (
+                      <div className="flex items-center justify-center h-8 w-8 rounded-full bg-white/10">
+                        {getRequiredPhotoIcon(selectedPhotoType, 18)}
                       </div>
                     )}
                   </div>
@@ -264,10 +381,26 @@ export const CameraView: React.FC<CameraViewProps> = ({ room, onPhotoCaptured })
                   />
                 </div>
               </div>
+              
+              {selectedEquipment && (
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="equipment-working">Equipamento funcionando:</Label>
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="equipment-working"
+                      checked={equipmentWorking}
+                      onCheckedChange={setEquipmentWorking}
+                    />
+                    <span className={equipmentWorking ? "text-green-600" : "text-red-600"}>
+                      {equipmentWorking ? "Sim" : "Não"}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
           )}
           
-          {room && !photoTaken && (
+          {room && !photoTaken && !selectedPhotoType && (
             <div className="mt-4">
               <h3 className="text-sm font-medium mb-2 flex items-center gap-2">
                 <MessageSquare className="h-4 w-4" />
@@ -298,24 +431,6 @@ export const CameraView: React.FC<CameraViewProps> = ({ room, onPhotoCaptured })
               </div>
             </div>
           )}
-        </TabsContent>
-        
-        <TabsContent value="upload">
-          <div className="p-8 border-2 border-dashed border-gray-200 rounded-md bg-gray-50 flex flex-col items-center justify-center text-center">
-            <UploadCloud className="h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium">Arraste e solte uma imagem</h3>
-            <p className="text-sm text-muted-foreground mb-4">Ou clique para selecionar um arquivo</p>
-            
-            <Button variant="outline" className="bg-white">
-              <UploadCloud className="h-4 w-4 mr-2" />
-              <span>Selecionar arquivo</span>
-              <Input
-                type="file"
-                accept="image/*"
-                className="absolute inset-0 opacity-0 cursor-pointer"
-              />
-            </Button>
-          </div>
         </TabsContent>
       </Tabs>
     </div>
