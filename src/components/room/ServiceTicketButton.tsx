@@ -1,14 +1,13 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AlertTriangle, Ticket, Loader2, ExternalLink } from 'lucide-react';
-import { Equipment, EquipmentStatus } from '@/types';
-import { toast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
+import { Plus, Loader2, ExternalLink, Wrench, Armchair, AirVent } from 'lucide-react';
+import { Equipment, EquipmentStatus, OfferType } from '@/types';
+import { toast } from '@/hooks/use-toast';
 import { useApiConfig } from '@/hooks/useApiConfig';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -18,17 +17,6 @@ interface ServiceTicketButtonProps {
   equipment: Equipment[];
 }
 
-interface ServiceNowTicket {
-  equipmentId: string;
-  description: string;
-  priority: 'low' | 'medium' | 'high' | 'critical';
-  contactName: string;
-  contactPhone?: string;
-  petrobrasKey: string;
-  roomId: string;
-  roomName: string;
-}
-
 export const ServiceTicketButton: React.FC<ServiceTicketButtonProps> = ({
   roomId,
   roomName,
@@ -36,29 +24,32 @@ export const ServiceTicketButton: React.FC<ServiceTicketButtonProps> = ({
 }) => {
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedEquipment, setSelectedEquipment] = useState<string>('');
+  const [selectedOffer, setSelectedOffer] = useState<OfferType | ''>('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<'low' | 'medium' | 'high' | 'critical'>('medium');
   const [contactName, setContactName] = useState(user?.name || '');
-  const [contactPhone, setContactPhone] = useState('');
   const [petrobrasKey, setPetrobrasKey] = useState(user?.petrobrasKey || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [ticketCreated, setTicketCreated] = useState<{id: string, url: string} | null>(null);
   
   const { mode } = useApiConfig();
-  
-  // Filter only equipment with issues
-  const problematicEquipment = equipment.filter(
-    item => item.status === EquipmentStatus.DAMAGED || 
-            item.status === EquipmentStatus.MAINTENANCE
-  );
-  
+
+  const getOfferIcon = (type: OfferType) => {
+    switch (type) {
+      case OfferType.CHAIRS:
+        return <Armchair className="h-4 w-4" />;
+      case OfferType.AIR_CONDITIONING:
+        return <AirVent className="h-4 w-4" />;
+      default:
+        return <Wrench className="h-4 w-4" />;
+    }
+  };
+
   const handleSubmit = async () => {
-    // Validação dos campos
-    if (!selectedEquipment) {
+    if (!selectedOffer) {
       toast({
         title: "Erro",
-        description: "Selecione um equipamento",
+        description: "Selecione um tipo de oferta",
         variant: "destructive"
       });
       return;
@@ -91,7 +82,6 @@ export const ServiceTicketButton: React.FC<ServiceTicketButtonProps> = ({
       return;
     }
     
-    // Validar formato da chave Petrobrás (4 caracteres alfanuméricos)
     const petrobrasKeyRegex = /^[A-Za-z0-9]{4}$/;
     if (!petrobrasKeyRegex.test(petrobrasKey)) {
       toast({
@@ -105,9 +95,8 @@ export const ServiceTicketButton: React.FC<ServiceTicketButtonProps> = ({
     setIsSubmitting(true);
     
     try {
-      // Criar objeto do ticket
       const ticketData: ServiceNowTicket = {
-        equipmentId: selectedEquipment,
+        equipmentId: selectedOffer,
         description,
         priority,
         contactName,
@@ -117,30 +106,16 @@ export const ServiceTicketButton: React.FC<ServiceTicketButtonProps> = ({
         roomName
       };
       
-      // Integração com ServiceNow
       if (mode === 'aws') {
-        // Em produção, usar AWS API Gateway para enviar ao ServiceNow
         try {
-          // Simulação da chamada à API para AWS
           await new Promise(resolve => setTimeout(resolve, 1500));
           
-          // Em uma implementação real, aqui seria feita a chamada para a API Gateway
-          // const response = await fetch('https://api-gateway-url/servicenow/ticket', {
-          //   method: 'POST',
-          //   headers: { 'Content-Type': 'application/json' },
-          //   body: JSON.stringify(ticketData)
-          // });
-          
-          // const result = await response.json();
-          
-          // Simular resposta de sucesso
           const mockResponse = {
             success: true,
             ticketId: `INC${Math.floor(Math.random() * 10000000)}`,
             ticketUrl: `https://servicenow.example.com/ticket/INC${Math.floor(Math.random() * 10000000)}`
           };
           
-          // Registrar ticket criado
           setTicketCreated({
             id: mockResponse.ticketId,
             url: mockResponse.ticketUrl
@@ -155,18 +130,15 @@ export const ServiceTicketButton: React.FC<ServiceTicketButtonProps> = ({
           throw new Error('Falha na comunicação com ServiceNow via AWS API Gateway');
         }
       } else {
-        // No modo local, simular criação de chamado
         await new Promise(resolve => setTimeout(resolve, 1000));
         
         const mockTicketId = `INC${Math.floor(Math.random() * 10000000)}`;
         
-        // Simular resposta de sucesso
         setTicketCreated({
           id: mockTicketId,
           url: `https://dev-servicenow.example.com/ticket/${mockTicketId}`
         });
         
-        // Logar os dados que seriam enviados
         console.log('ServiceNow Ticket (simulado):', ticketData);
         
         toast({
@@ -186,83 +158,48 @@ export const ServiceTicketButton: React.FC<ServiceTicketButtonProps> = ({
       setIsSubmitting(false);
     }
   };
-  
-  const resetForm = () => {
-    setSelectedEquipment('');
-    setDescription('');
-    setPriority('medium');
-    setContactName(user?.name || '');
-    setContactPhone('');
-    setPetrobrasKey(user?.petrobrasKey || '');
-    setTicketCreated(null);
-  };
-  
-  const handleClose = () => {
-    setIsOpen(false);
-    setTimeout(resetForm, 300); // Reset após animação de fechamento
-  };
-  
-  const openServiceNow = () => {
-    if (ticketCreated?.url) {
-      window.open(ticketCreated.url, '_blank');
-    }
-  };
-  
+
   return (
     <>
       <Button 
         onClick={() => setIsOpen(true)}
         variant="outline" 
-        className="border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 hover:text-orange-800 flex items-center gap-2"
+        className="border-green-200 bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800 flex items-center gap-2"
       >
-        <Ticket className="h-4 w-4" />
-        Abrir Chamado ServiceNow
+        <Plus className="h-4 w-4" />
+        Nova Oferta
       </Button>
       
-      <Dialog open={isOpen} onOpenChange={handleClose}>
+      <Dialog open={isOpen} onOpenChange={(open) => !isSubmitting && setIsOpen(open)}>
         <DialogContent className="sm:max-w-[550px]">
           {!ticketCreated ? (
             <>
               <DialogHeader>
-                <DialogTitle>Abrir Chamado no ServiceNow</DialogTitle>
+                <DialogTitle>Nova Oferta de Manutenção</DialogTitle>
                 <DialogDescription>
-                  Registre um problema com equipamento da sala {roomName} para suporte técnico.
+                  Registre uma oferta de manutenção para {roomName}.
                 </DialogDescription>
               </DialogHeader>
               
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="equipment">Equipamento com problema <span className="text-red-500">*</span></Label>
+                  <Label htmlFor="offerType">Tipo de Oferta <span className="text-red-500">*</span></Label>
                   <Select 
-                    value={selectedEquipment} 
-                    onValueChange={setSelectedEquipment}
+                    value={selectedOffer} 
+                    onValueChange={setSelectedOffer}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecione o equipamento" />
+                      <SelectValue placeholder="Selecione o tipo de oferta" />
                     </SelectTrigger>
                     <SelectContent>
-                      {problematicEquipment.length > 0 ? (
-                        problematicEquipment.map(item => (
-                          <SelectItem key={item.id} value={item.id}>
-                            {item.name}
-                          </SelectItem>
-                        ))
-                      ) : (
-                        equipment.map(item => (
-                          <SelectItem key={item.id} value={item.id}>
-                            {item.name}
-                          </SelectItem>
-                        ))
-                      )}
+                      {Object.values(OfferType).map(type => (
+                        <SelectItem key={type} value={type} className="flex items-center gap-2">
+                          {getOfferIcon(type)}
+                          <span>{type}</span>
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
-                  
-                  {problematicEquipment.length === 0 && (
-                    <div className="text-sm text-amber-600 flex items-center gap-1 mt-1">
-                      <AlertTriangle className="h-3 w-3" />
-                      <span>Nenhum equipamento com problemas registrados.</span>
-                    </div>
-                  )}
                 </div>
                 
                 <div className="grid gap-2">
@@ -276,7 +213,7 @@ export const ServiceTicketButton: React.FC<ServiceTicketButtonProps> = ({
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="low">Baixa - Pode esperar</SelectItem>
-                      <SelectItem value="medium">Média - Precisa ser resolvido</SelectItem>
+                      <SelectItem value="medium">Média - Precisa ser resolvida</SelectItem>
                       <SelectItem value="high">Alta - Urgente</SelectItem>
                       <SelectItem value="critical">Crítica - Emergência</SelectItem>
                     </SelectContent>
@@ -340,13 +277,13 @@ export const ServiceTicketButton: React.FC<ServiceTicketButtonProps> = ({
               </div>
               
               <DialogFooter>
-                <Button type="button" variant="outline" onClick={handleClose}>
+                <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
                   Cancelar
                 </Button>
                 <Button 
                   onClick={handleSubmit} 
                   disabled={isSubmitting}
-                  className="bg-orange-600 hover:bg-orange-700"
+                  className="bg-green-600 hover:bg-green-700"
                 >
                   {isSubmitting ? (
                     <>
@@ -354,7 +291,7 @@ export const ServiceTicketButton: React.FC<ServiceTicketButtonProps> = ({
                       Enviando...
                     </>
                   ) : (
-                    "Abrir Chamado"
+                    "Criar Oferta"
                   )}
                 </Button>
               </DialogFooter>
@@ -395,7 +332,7 @@ export const ServiceTicketButton: React.FC<ServiceTicketButtonProps> = ({
               
               <DialogFooter>
                 <Button 
-                  onClick={handleClose} 
+                  onClick={() => setIsOpen(false)} 
                   className="bg-orange-600 hover:bg-orange-700 w-full"
                 >
                   Concluir

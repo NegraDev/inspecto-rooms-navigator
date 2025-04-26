@@ -9,7 +9,12 @@ export enum EquipmentType {
   OUTLETS = "Tomadas",
   FILTER = "Filtros",
   MICROPHONE = "Microfone",
-  SPEAKER = "Caixa de Som"
+  SPEAKER = "Caixa de Som",
+  CHAIR = "Cadeira",
+  AIR_VENT = "Ar Condicionado",
+  LIGHT = "Lâmpada",
+  TRASH_BIN = "Lixeira",
+  DOOR_HANDLE = "Maçaneta"
 }
 
 export type Tower = {
@@ -148,7 +153,6 @@ export interface AwsConfig {
   region: string;
 }
 
-// Adicionando tipos para permissões de usuários
 export enum UserPermission {
   VIEW_INSPECTIONS = "view_inspections",
   MANAGE_INSPECTIONS = "manage_inspections",
@@ -165,7 +169,6 @@ export enum UserPermission {
 
 export type UserRole = 'admin' | 'inspector' | 'supervisor';
 
-// Mapeamento de papéis para permissões
 export const RolePermissions: Record<UserRole, UserPermission[]> = {
   inspector: [
     UserPermission.VIEW_ROOMS,
@@ -197,3 +200,11 @@ export const RolePermissions: Record<UserRole, UserPermission[]> = {
     UserPermission.SYSTEM_SETTINGS
   ]
 };
+
+export enum OfferType {
+  CHAIRS = "Cadeiras",
+  AIR_CONDITIONING = "Ar Condicionado",
+  LIGHTS = "Lâmpadas",
+  TRASH = "Lixo",
+  DOOR_HANDLES = "Maçanetas"
+}

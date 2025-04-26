@@ -44,7 +44,7 @@ interface RequiredPhoto {
 
 interface CameraViewProps {
   room?: Room;
-  onPhotoCaptured: (photoData: string, caption: string, equipmentId?: string, photoType?: RequiredPhotoType) => void;
+  onPhotoCaptured: (photoData: string, caption: string, equipmentId?: string, photoType?: RequiredPhotoType, equipmentWorking?: boolean) => void;
 }
 
 export const CameraView: React.FC<CameraViewProps> = ({ room, onPhotoCaptured }) => {
@@ -137,13 +137,23 @@ export const CameraView: React.FC<CameraViewProps> = ({ room, onPhotoCaptured })
   
   const savePhoto = () => {
     if (photoRef.current && photoRef.current.src) {
+      if (selectedEquipment && !equipmentWorking && !photoTaken) {
+        toast({
+          title: "Foto Obrigatória",
+          description: "É necessário tirar uma foto do equipamento com defeito.",
+          variant: "destructive"
+        });
+        return;
+      }
+
       const photoId = `photo-${Date.now()}`;
       
       onPhotoCaptured(
         photoRef.current.src, 
         noteText,
         selectedEquipment ? selectedEquipment.id : undefined,
-        selectedPhotoType
+        selectedPhotoType,
+        equipmentWorking
       );
       
       if (selectedPhotoType) {
