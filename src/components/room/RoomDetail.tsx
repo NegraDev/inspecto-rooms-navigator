@@ -16,7 +16,8 @@ import {
   Users,
   Radio,
   Battery,
-  Volume2
+  Volume2,
+  Camera
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -24,6 +25,8 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useNavigate } from 'react-router-dom';
 import { ServiceTicketButton } from './ServiceTicketButton';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 interface RoomDetailProps {
   room: Room;
@@ -173,7 +176,7 @@ const EquipmentCard: React.FC<{ equipment: Equipment }> = ({ equipment }) => {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center mb-3">
           <Badge className={`${getStatusColor(equipment.status)}`}>
             {statusText[equipment.status]}
           </Badge>
@@ -182,6 +185,29 @@ const EquipmentCard: React.FC<{ equipment: Equipment }> = ({ equipment }) => {
             {getStatusIcon(equipment.status)}
           </div>
         </div>
+        
+        <div className="flex items-center gap-2 mb-3">
+          <Label htmlFor={`equipment-status-${equipment.id}`} className="cursor-pointer">
+            Status do Equipamento:
+          </Label>
+          <div className="flex items-center gap-2">
+            <Switch 
+              id={`equipment-status-${equipment.id}`}
+              checked={equipment.status === EquipmentStatus.WORKING}
+              disabled={true} // Somente pode ser alterado durante inspeção
+            />
+            <span className="text-sm">
+              {equipment.status === EquipmentStatus.WORKING ? 'Funcionando' : 'Com Defeito'}
+            </span>
+          </div>
+        </div>
+        
+        {equipment.status !== EquipmentStatus.WORKING && (
+          <div className="bg-red-50 border border-red-200 rounded p-2 text-red-700 text-xs flex items-center gap-1 mb-2">
+            <Camera className="h-3 w-3" />
+            <span>Foto obrigatória para documentar o defeito</span>
+          </div>
+        )}
         
         {equipment.lastChecked && (
           <p className="text-xs text-muted-foreground mt-2">
@@ -192,21 +218,3 @@ const EquipmentCard: React.FC<{ equipment: Equipment }> = ({ equipment }) => {
     </Card>
   );
 };
-
-const Camera: React.FC<{ className?: string }> = ({ className }) => (
-  <svg 
-    xmlns="http://www.w3.org/2000/svg" 
-    width="24" 
-    height="24" 
-    viewBox="0 0 24 24" 
-    fill="none" 
-    stroke="currentColor" 
-    strokeWidth="2" 
-    strokeLinecap="round" 
-    strokeLinejoin="round" 
-    className={className}
-  >
-    <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
-    <circle cx="12" cy="13" r="3"/>
-  </svg>
-);
