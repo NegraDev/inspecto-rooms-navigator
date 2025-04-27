@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Equipment, EquipmentStatus, EquipmentType } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -9,9 +9,11 @@ import {
   Tv, Radio, Battery, Cable, Power, Filter, Volume2,
   CheckCircle, AlertTriangle, Wrench, HelpCircle, Camera
 } from 'lucide-react';
+import { toast } from '@/components/ui/use-toast';
 
 interface EquipmentCardProps {
   equipment: Equipment;
+  onStatusChange?: (equipmentId: string, working: boolean) => void;
 }
 
 const getEquipmentIcon = (type: EquipmentType) => {
@@ -80,7 +82,24 @@ const statusText = {
   [EquipmentStatus.UNKNOWN]: "Não Verificado"
 };
 
-export const EquipmentCard: React.FC<EquipmentCardProps> = ({ equipment }) => {
+export const EquipmentCard: React.FC<EquipmentCardProps> = ({ equipment, onStatusChange }) => {
+  const [isWorking, setIsWorking] = useState(equipment.status === EquipmentStatus.WORKING);
+
+  const handleStatusChange = (checked: boolean) => {
+    setIsWorking(checked);
+    
+    if (onStatusChange) {
+      onStatusChange(equipment.id, checked);
+    } else {
+      // Se não houver manipulador de mudança de status externo, mostre um toast
+      toast({
+        title: checked ? "Equipamento marcado como funcionando" : "Equipamento marcado com defeito",
+        description: `Status do ${equipment.name} atualizado.`,
+        variant: checked ? "default" : "destructive"
+      });
+    }
+  };
+
   return (
     <Card className="border border-gray-100 hover:border-gray-200 transition-colors">
       <CardHeader className="pb-2">
@@ -107,16 +126,16 @@ export const EquipmentCard: React.FC<EquipmentCardProps> = ({ equipment }) => {
           <div className="flex items-center gap-2">
             <Switch 
               id={`equipment-status-${equipment.id}`}
-              checked={equipment.status === EquipmentStatus.WORKING}
-              disabled={true}
+              checked={isWorking}
+              onCheckedChange={handleStatusChange}
             />
             <span className="text-sm">
-              {equipment.status === EquipmentStatus.WORKING ? 'Funcionando' : 'Com Defeito'}
+              {isWorking ? 'Funcionando' : 'Com Defeito'}
             </span>
           </div>
         </div>
         
-        {equipment.status !== EquipmentStatus.WORKING && (
+        {!isWorking && (
           <div className="bg-red-50 border border-red-200 rounded p-2 text-red-700 text-xs flex items-center gap-1 mb-2">
             <Camera className="h-3 w-3" />
             <span>Foto obrigatória para documentar o defeito</span>

@@ -57,9 +57,10 @@ const CameraPage = () => {
     const newPhoto: ExtendedPhoto = {
       id: `photo-${Date.now()}`,
       url: photoData,
-      caption: caption || undefined,
-      equipmentId: equipmentId,
+      caption: caption || "",
       timestamp: new Date().toISOString(),
+      type: 'equipment', // Adicionando o tipo padrão
+      equipmentId,
       photoType,
       equipmentWorking
     };

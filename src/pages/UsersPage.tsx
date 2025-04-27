@@ -1,302 +1,430 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PageLayout } from '@/components/layout/PageLayout';
-import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { UserRole, UserPermission } from '@/types';
-import { UserPlus, Trash2, ShieldAlert, Edit } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
-import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from '@/components/ui/table';
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from '@/components/ui/dropdown-menu';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogFooter, 
+  DialogHeader, 
+  DialogTitle 
+} from '@/components/ui/dialog';
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { 
+  Search, 
+  MoreHorizontal, 
+  UserPlus, 
+  Trash, 
+  Edit, 
+  Mail, 
+  Phone, 
+  Building, 
+  Shield 
+} from 'lucide-react';
+import { UserRole, RolePermissionMap } from '@/types';
+import { Badge } from '@/components/ui/badge';
 
-// Tipo para os usuários da página de gerenciamento
-type UserData = {
-  id: string;
-  name: string;
-  email: string;
-  role: UserRole;
-  petrobrasKey: string;
-};
-
-// Usuários de exemplo (em uma aplicação real, seriam carregados de uma API)
-const demoUsers: UserData[] = [
+// Mock data for users
+const mockUsers = [
   {
     id: '1',
-    name: 'Admin',
-    email: 'admin@example.com',
+    name: 'João Silva',
+    email: 'joao.silva@petrobras.com.br',
     role: UserRole.ADMIN,
-    petrobrasKey: 'A12B',
+    department: 'TI',
+    petrobrasKey: 'JS7890',
+    phone: '(21) 99999-1234'
   },
   {
     id: '2',
-    name: 'Carlos Supervisor',
-    email: 'supervisor@example.com',
-    role: UserRole.SUPERVISOR,
-    petrobrasKey: 'S34C',
+    name: 'Maria Oliveira',
+    email: 'maria.oliveira@petrobras.com.br',
+    role: UserRole.MANAGER,
+    department: 'Operações',
+    petrobrasKey: 'MO4567',
+    phone: '(21) 99999-5678'
   },
   {
     id: '3',
-    name: 'Maria Inspetora',
-    email: 'inspector@example.com',
+    name: 'Carlos Santos',
+    email: 'carlos.santos@petrobras.com.br',
     role: UserRole.INSPECTOR,
-    petrobrasKey: '78D9',
+    department: 'Manutenção',
+    petrobrasKey: 'CS1234',
+    phone: '(21) 99999-9012'
+  },
+  {
+    id: '4',
+    name: 'Ana Pereira',
+    email: 'ana.pereira@petrobras.com.br',
+    role: UserRole.USER,
+    department: 'Administrativo',
+    petrobrasKey: 'AP5678',
+    phone: '(21) 99999-3456'
+  },
+  {
+    id: '5',
+    name: 'Roberto Almeida',
+    email: 'roberto.almeida@petrobras.com.br',
+    role: UserRole.INSPECTOR,
+    department: 'Manutenção',
+    petrobrasKey: 'RA9012',
+    phone: '(21) 99999-7890'
   }
 ];
 
 const UsersPage = () => {
-  const { user, hasPermission } = useAuth();
-  const [users, setUsers] = useState<UserData[]>(demoUsers);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [newUser, setNewUser] = useState<Partial<UserData>>({
+  const [users, setUsers] = useState(mockUsers);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isAddUserDialogOpen, setIsAddUserDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [newUser, setNewUser] = useState({
     name: '',
     email: '',
     role: UserRole.INSPECTOR,
+    department: '',
     petrobrasKey: '',
+    phone: ''
   });
   
-  // Verificar se o usuário tem permissão para gerenciar usuários
-  const canManageUsers = hasPermission(UserPermission.MANAGE_USERS);
+  const filteredUsers = users.filter(user => 
+    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.petrobrasKey.toLowerCase().includes(searchTerm.toLowerCase())
+  );
   
   const handleAddUser = () => {
-    if (!newUser.name || !newUser.email || !newUser.role || !newUser.petrobrasKey) {
-      toast({
-        title: "Erro ao adicionar usuário",
-        description: "Todos os campos são obrigatórios",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    // Validar o formato da chave Petrobrás
-    const petrobrasKeyRegex = /^[A-Za-z0-9]{4}$/;
-    if (!petrobrasKeyRegex.test(newUser.petrobrasKey)) {
-      toast({
-        title: "Erro",
-        description: "A chave Petrobrás deve conter exatamente 4 caracteres alfanuméricos",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    const newUserData = {
-      ...newUser,
-      id: `${users.length + 1}`, // Em uma aplicação real, seria gerado pelo backend
-    } as UserData;
-    
-    setUsers([...users, newUserData]);
-    setIsDialogOpen(false);
+    const id = `${users.length + 1}`;
+    setUsers([...users, { ...newUser, id }]);
     setNewUser({
       name: '',
       email: '',
-      role: 'inspector',
+      role: UserRole.INSPECTOR,
+      department: '',
       petrobrasKey: '',
+      phone: ''
     });
-    
-    toast({
-      title: "Usuário adicionado com sucesso",
-      description: `${newUser.name} foi adicionado como ${newUser.role}`,
-    });
+    setIsAddUserDialogOpen(false);
   };
   
-  const handleDeleteUser = (userId: string) => {
-    // Não permitir que o usuário exclua sua própria conta
-    if (userId === user?.id) {
-      toast({
-        title: "Operação não permitida",
-        description: "Você não pode excluir sua própria conta",
-        variant: "destructive",
-      });
-      return;
+  const handleDeleteUser = () => {
+    if (selectedUser) {
+      setUsers(users.filter(user => user.id !== selectedUser.id));
+      setIsDeleteDialogOpen(false);
+      setSelectedUser(null);
     }
-    
-    setUsers(users.filter(u => u.id !== userId));
-    toast({
-      title: "Usuário removido com sucesso",
-    });
   };
   
   const getRoleBadgeColor = (role: UserRole) => {
-    switch(role) {
-      case 'admin':
-        return 'bg-red-500 hover:bg-red-600';
-      case 'supervisor':
-        return 'bg-orange-500 hover:bg-orange-600';
-      case 'inspector':
-        return 'bg-blue-500 hover:bg-blue-600';
+    switch (role) {
+      case UserRole.ADMIN:
+        return 'bg-red-100 text-red-800 border-red-200';
+      case UserRole.MANAGER:
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case UserRole.INSPECTOR:
+        return 'bg-green-100 text-green-800 border-green-200';
+      case UserRole.USER:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
       default:
-        return 'bg-slate-500 hover:bg-slate-600';
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+  
+  const getRoleLabel = (role: UserRole) => {
+    switch (role) {
+      case UserRole.ADMIN:
+        return 'Administrador';
+      case UserRole.MANAGER:
+        return 'Gerente';
+      case UserRole.INSPECTOR:
+        return 'Inspetor';
+      case UserRole.USER:
+        return 'Usuário';
+      default:
+        return 'Desconhecido';
     }
   };
   
   return (
     <PageLayout>
-      <div className="space-y-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+      <div className="space-y-6 animate-fade-in">
+        <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-              <ShieldAlert className="h-5 w-5 text-amber-500" />
-              Gerenciamento de Usuários
-            </h1>
+            <h1 className="text-2xl font-bold">Usuários</h1>
             <p className="text-muted-foreground">
-              {canManageUsers 
-                ? "Adicione, edite e remova usuários do sistema"
-                : "Visualize os usuários do sistema"}
+              Gerencie usuários e permissões do sistema
             </p>
           </div>
           
-          {canManageUsers && (
-            <Button onClick={() => setIsDialogOpen(true)} className="ml-auto">
-              <UserPlus className="h-4 w-4 mr-2" />
-              Adicionar Usuário
-            </Button>
-          )}
+          <Button onClick={() => setIsAddUserDialogOpen(true)}>
+            <UserPlus className="h-4 w-4 mr-2" />
+            Adicionar Usuário
+          </Button>
         </div>
         
-        <Card>
-          <CardHeader>
-            <CardTitle>Usuários</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Função</TableHead>
-                  <TableHead>Chave Petrobrás</TableHead>
-                  {canManageUsers && <TableHead className="text-right">Ações</TableHead>}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {users.map((user) => (
+        <div className="flex items-center space-x-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Buscar usuários..."
+              className="pl-8"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          
+          <Select defaultValue="all">
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filtrar por cargo" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os cargos</SelectItem>
+              <SelectItem value="admin">Administradores</SelectItem>
+              <SelectItem value="manager">Gerentes</SelectItem>
+              <SelectItem value="inspector">Inspetores</SelectItem>
+              <SelectItem value="user">Usuários</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        
+        <div className="border rounded-md">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nome</TableHead>
+                <TableHead>Cargo</TableHead>
+                <TableHead>Departamento</TableHead>
+                <TableHead>Chave Petrobras</TableHead>
+                <TableHead>Contato</TableHead>
+                <TableHead className="w-[50px]"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredUsers.length > 0 ? (
+                filteredUsers.map((user) => (
                   <TableRow key={user.id}>
-                    <TableCell className="font-medium">{user.name}</TableCell>
-                    <TableCell>{user.email}</TableCell>
                     <TableCell>
-                      <Badge className={getRoleBadgeColor(user.role)}>
-                        {user.role === UserRole.ADMIN && 'Administrador'}
-                        {user.role === UserRole.SUPERVISOR && 'Supervisor'}
-                        {user.role === UserRole.INSPECTOR && 'Inspetor'}
+                      <div className="font-medium">{user.name}</div>
+                      <div className="text-sm text-muted-foreground">{user.email}</div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={`${getRoleBadgeColor(user.role)}`}>
+                        {getRoleLabel(user.role)}
                       </Badge>
                     </TableCell>
+                    <TableCell>{user.department}</TableCell>
                     <TableCell>{user.petrobrasKey}</TableCell>
-                    {canManageUsers && (
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            className="h-8 w-8 p-0"
-                          >
-                            <Edit className="h-4 w-4" />
-                            <span className="sr-only">Editar</span>
+                    <TableCell>{user.phone}</TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Abrir menu</span>
                           </Button>
-                          <Button 
-                            variant="destructive" 
-                            size="sm"
-                            className="h-8 w-8 p-0"
-                            onClick={() => handleDeleteUser(user.id)}
-                            disabled={user.id === '1'} // Não permitir exclusão do admin principal
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem>
+                            <Edit className="h-4 w-4 mr-2" />
+                            Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="text-red-600"
+                            onClick={() => {
+                              setSelectedUser(user);
+                              setIsDeleteDialogOpen(true);
+                            }}
                           >
-                            <Trash2 className="h-4 w-4" />
-                            <span className="sr-only">Excluir</span>
-                          </Button>
-                        </div>
-                      </TableCell>
-                    )}
+                            <Trash className="h-4 w-4 mr-2" />
+                            Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8">
+                    <div className="flex flex-col items-center justify-center text-muted-foreground">
+                      <Search className="h-8 w-8 mb-2" />
+                      <h3 className="font-medium text-lg">Nenhum usuário encontrado</h3>
+                      <p>Tente ajustar os filtros ou adicione um novo usuário.</p>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
       
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[550px]">
+      {/* Add User Dialog */}
+      <Dialog open={isAddUserDialogOpen} onOpenChange={setIsAddUserDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Adicionar Novo Usuário</DialogTitle>
             <DialogDescription>
-              Preencha os dados abaixo para adicionar um novo usuário ao sistema.
+              Preencha os dados do novo usuário. Todos os campos são obrigatórios.
             </DialogDescription>
           </DialogHeader>
           
           <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="name" className="text-right">
-                Nome
-              </Label>
-              <Input
-                id="name"
-                value={newUser.name}
-                onChange={(e) => setNewUser({...newUser, name: e.target.value})}
-                className="col-span-3"
-              />
-            </div>
-            
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="email" className="text-right">
-                Email
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                value={newUser.email}
-                onChange={(e) => setNewUser({...newUser, email: e.target.value})}
-                className="col-span-3"
-              />
-            </div>
-            
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="petrobrasKey" className="text-right">
-                Chave Petrobrás
-              </Label>
-              <div className="col-span-3 space-y-1">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Nome Completo</Label>
+                <Input
+                  id="name"
+                  value={newUser.name}
+                  onChange={(e) => setNewUser({...newUser, name: e.target.value})}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="petrobrasKey">Chave Petrobras</Label>
                 <Input
                   id="petrobrasKey"
                   value={newUser.petrobrasKey}
-                  onChange={(e) => setNewUser({...newUser, petrobrasKey: e.target.value.toUpperCase()})}
-                  maxLength={4}
-                  placeholder="4 caracteres alfanuméricos"
-                  className="uppercase"
+                  onChange={(e) => setNewUser({...newUser, petrobrasKey: e.target.value})}
                 />
-                <p className="text-xs text-muted-foreground">
-                  A chave deve conter exatamente 4 caracteres (letras e números).
-                </p>
               </div>
             </div>
             
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="role" className="text-right">
-                Função
-              </Label>
-              <Select 
-                value={newUser.role}
-                onValueChange={(value) => setNewUser({...newUser, role: value as UserRole})}
-              >
-                <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Selecione uma função" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={UserRole.INSPECTOR}>Inspetor</SelectItem>
-                  <SelectItem value={UserRole.SUPERVISOR}>Supervisor</SelectItem>
-                  <SelectItem value={UserRole.ADMIN}>Administrador</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <div className="flex items-center">
+                <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
+                <Input
+                  id="email"
+                  type="email"
+                  value={newUser.email}
+                  onChange={(e) => setNewUser({...newUser, email: e.target.value})}
+                />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="phone">Telefone</Label>
+                <div className="flex items-center">
+                  <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
+                  <Input
+                    id="phone"
+                    value={newUser.phone}
+                    onChange={(e) => setNewUser({...newUser, phone: e.target.value})}
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="department">Departamento</Label>
+                <div className="flex items-center">
+                  <Building className="h-4 w-4 mr-2 text-muted-foreground" />
+                  <Input
+                    id="department"
+                    value={newUser.department}
+                    onChange={(e) => setNewUser({...newUser, department: e.target.value})}
+                  />
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="role">Cargo</Label>
+              <div className="flex items-center">
+                <Shield className="h-4 w-4 mr-2 text-muted-foreground" />
+                <Select 
+                  value={newUser.role} 
+                  onValueChange={(value) => setNewUser({...newUser, role: value as UserRole})}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Selecione um cargo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={UserRole.ADMIN}>Administrador</SelectItem>
+                    <SelectItem value={UserRole.MANAGER}>Gerente</SelectItem>
+                    <SelectItem value={UserRole.INSPECTOR}>Inspetor</SelectItem>
+                    <SelectItem value={UserRole.USER}>Usuário</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {newUser.role && (
+                  <>
+                    Este cargo tem acesso a: {RolePermissionMap[newUser.role].slice(0, 3).map(p => 
+                      p.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+                    ).join(', ')}
+                    {RolePermissionMap[newUser.role].length > 3 && ` e mais ${RolePermissionMap[newUser.role].length - 3} permissões`}
+                  </>
+                )}
+              </p>
             </div>
           </div>
           
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+            <Button variant="outline" onClick={() => setIsAddUserDialogOpen(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleAddUser}>
-              Adicionar Usuário
+            <Button onClick={handleAddUser}>Adicionar Usuário</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Delete User Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Confirmar Exclusão</DialogTitle>
+            <DialogDescription>
+              Tem certeza que deseja excluir este usuário? Esta ação não pode ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedUser && (
+            <div className="py-4">
+              <div className="flex items-center space-x-4">
+                <div className="bg-red-100 text-red-700 rounded-full h-12 w-12 flex items-center justify-center">
+                  <Trash className="h-6 w-6" />
+                </div>
+                <div>
+                  <h4 className="font-medium">{selectedUser.name}</h4>
+                  <p className="text-sm text-muted-foreground">{selectedUser.email}</p>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteUser}>
+              Excluir Usuário
             </Button>
           </DialogFooter>
         </DialogContent>
