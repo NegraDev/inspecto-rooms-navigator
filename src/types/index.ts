@@ -73,7 +73,8 @@ export enum InspectionStatus {
   IN_PROGRESS = 'in_progress',
   COMPLETED = 'completed',
   CANCELLED = 'cancelled',
-  FLAGGED = 'flagged'
+  FLAGGED = 'flagged',
+  ISSUES_FOUND = 'issues_found'
 }
 
 export interface RolePermissions {
@@ -174,6 +175,11 @@ export interface PerformanceReport {
   averageTime: number;
   issuesIdentified: number;
   period: string;
+  date: string;
+  inspectorId?: string;
+  inspectorName?: string;
+  averageTimePerInspection?: number;
+  efficiency?: number;
 }
 
 export interface TeamPerformance {
@@ -182,14 +188,20 @@ export interface TeamPerformance {
   averageCompletionTime: number;
   issuesIdentified: number;
   period: string;
+  inspectors?: PerformanceReport[];
 }
 
 export interface AwsConfig {
   region: string;
-  accessKeyId: string;
-  secretAccessKey: string;
-  bucketName: string;
-  useAwsServices: boolean;
+  accessKeyId?: string;
+  secretAccessKey?: string;
+  bucketName?: string;
+  useAwsServices?: boolean;
+  mode?: 'aws' | 'local';
+  apiEndpoint?: string;
+  apiKey?: string;
+  userPoolId?: string;
+  clientId?: string;
 }
 
 export interface FilterOptions {

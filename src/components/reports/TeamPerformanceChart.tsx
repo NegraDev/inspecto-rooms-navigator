@@ -18,11 +18,14 @@ interface TeamPerformanceChartProps {
 }
 
 export const TeamPerformanceChart: React.FC<TeamPerformanceChartProps> = ({ teamData }) => {
-  const chartData = teamData.inspectors.map(inspector => ({
-    name: inspector.inspectorName,
+  // Verificar se há dados de inspetores disponíveis
+  const inspectors = teamData.inspectors || [];
+  
+  const chartData = inspectors.map(inspector => ({
+    name: inspector.inspectorName || inspector.inspector,
     inspeções: inspector.inspectionsCompleted,
     problemas: inspector.issuesIdentified,
-    eficiência: inspector.efficiency,
+    eficiência: inspector.efficiency || 0,
   }));
 
   const chartConfig = {

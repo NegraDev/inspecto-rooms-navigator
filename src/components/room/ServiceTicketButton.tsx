@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -16,6 +17,18 @@ interface ServiceTicketButtonProps {
   roomName: string;
   equipment: Equipment[];
 }
+
+// Função auxiliar para obter ícones baseados no tipo de oferta
+const getOfferIcon = (type: OfferType) => {
+  switch(type) {
+    case OfferType.CHAIRS:
+      return <Armchair className="h-4 w-4" />;
+    case OfferType.AIR_CONDITIONING:
+      return <AirVent className="h-4 w-4" />;
+    default:
+      return <Wrench className="h-4 w-4" />;
+  }
+};
 
 export const ServiceTicketButton: React.FC<ServiceTicketButtonProps> = ({
   roomId,
@@ -182,7 +195,7 @@ export const ServiceTicketButton: React.FC<ServiceTicketButtonProps> = ({
                   <Label htmlFor="offerType">Tipo de Oferta <span className="text-red-500">*</span></Label>
                   <Select 
                     value={selectedOffer} 
-                    onValueChange={setSelectedOffer}
+                    onValueChange={(value: OfferType) => setSelectedOffer(value)}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione o tipo de oferta" />

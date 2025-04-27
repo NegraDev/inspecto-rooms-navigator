@@ -43,7 +43,7 @@ export const InspectorPerformanceChart: React.FC<InspectorPerformanceChartProps>
       date: formatDate(report.date),
       inspeções: report.inspectionsCompleted,
       problemas: report.issuesIdentified,
-      eficiência: report.efficiency,
+      eficiência: report.efficiency || 0,
     }));
 
   const chartConfig = {

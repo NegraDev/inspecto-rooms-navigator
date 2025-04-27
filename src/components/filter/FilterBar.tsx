@@ -36,6 +36,19 @@ export const FilterBar: React.FC<FilterBarProps> = ({ towers, onFilterChange }) 
   
   const hasActiveFilters = Object.keys(filters).length > 0 || searchTerm.length > 0;
   
+  // Função para criar array de andares com base na torre selecionada
+  const getFloorOptions = () => {
+    if (filters.tower) {
+      const tower = towers.find(t => t.id === filters.tower);
+      if (tower && tower.floors) {
+        // Converta para array de números se for único número
+        const floorsArray = Array.isArray(tower.floors) ? tower.floors : [tower.floors];
+        return Array.from({ length: Math.max(...floorsArray) }, (_, i) => i + 1);
+      }
+    }
+    return Array.from({ length: 20 }, (_, i) => i + 1);
+  };
+  
   return (
     <div className="bg-white rounded-lg shadow-subtle border border-gray-100 p-4 mb-6">
       <div className="flex flex-col md:flex-row md:items-center gap-3 mb-4">
@@ -104,20 +117,11 @@ export const FilterBar: React.FC<FilterBarProps> = ({ towers, onFilterChange }) 
               <SelectValue placeholder="Andar" />
             </SelectTrigger>
             <SelectContent>
-              {filters.tower && towers.find(t => t.id === filters.tower)?.floors
-                ? Array.from(
-                    { length: towers.find(t => t.id === filters.tower)!.floors },
-                    (_, i) => i + 1
-                  ).map(floor => (
-                    <SelectItem key={floor} value={floor.toString()}>
-                      Andar {floor}
-                    </SelectItem>
-                  ))
-                : Array.from({ length: 20 }, (_, i) => i + 1).map(floor => (
-                    <SelectItem key={floor} value={floor.toString()}>
-                      Andar {floor}
-                    </SelectItem>
-                  ))}
+              {getFloorOptions().map(floor => (
+                <SelectItem key={floor.toString()} value={floor.toString()}>
+                  Andar {floor}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
