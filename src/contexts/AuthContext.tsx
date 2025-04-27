@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { UserRole, UserPermission, RolePermissions } from '@/types';
+import { UserRole, UserPermission, RolePermissionMap } from '@/types';
 import { useApiConfig } from '@/hooks/useApiConfig';
 
 export interface User {
@@ -45,7 +45,7 @@ const DEMO_USERS: Record<string, { id: string; name: string; email: string; pass
     name: 'Admin',
     email: 'admin@example.com',
     password: 'admin123',
-    role: 'admin',
+    role: UserRole.ADMIN,
     petrobrasKey: 'A12B',
   },
   'supervisor@example.com': {
@@ -53,7 +53,7 @@ const DEMO_USERS: Record<string, { id: string; name: string; email: string; pass
     name: 'Carlos Supervisor',
     email: 'supervisor@example.com',
     password: 'super123',
-    role: 'supervisor',
+    role: UserRole.SUPERVISOR,
     petrobrasKey: 'S34C',
   },
   'inspector@example.com': {
@@ -61,7 +61,7 @@ const DEMO_USERS: Record<string, { id: string; name: string; email: string; pass
     name: 'Maria Inspetora',
     email: 'inspector@example.com',
     password: 'insp123',
-    role: 'inspector',
+    role: UserRole.INSPECTOR,
     petrobrasKey: '78D9',
   }
 };
@@ -85,7 +85,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const parsedUser = JSON.parse(storedUser);
         // Adicionar permissões baseadas na função do usuário
         if (parsedUser && parsedUser.role) {
-          parsedUser.permissions = RolePermissions[parsedUser.role as UserRole] || [];
+          parsedUser.permissions = RolePermissionMap[parsedUser.role as UserRole] || [];
         }
         setUser(parsedUser);
       } catch (error) {
@@ -143,7 +143,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         if (demoUser && demoUser.password === password) {
           // Adicionar permissões baseadas na função
-          const permissions = RolePermissions[demoUser.role];
+          const permissions = RolePermissionMap[demoUser.role];
           
           // Criar usuário completo com permissões
           const userWithPermissions: User = {
@@ -181,9 +181,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const contextValue: AuthContextType = {
     user,
     isAuthenticated: !!user,
-    isAdmin: user?.role === 'admin' || false,
-    isSupervisor: user?.role === 'supervisor' || false,
-    isInspector: user?.role === 'inspector' || false,
+    isAdmin: user?.role === UserRole.ADMIN || false,
+    isSupervisor: user?.role === UserRole.SUPERVISOR || false,
+    isInspector: user?.role === UserRole.INSPECTOR || false,
     hasPermission,
     login,
     logout,

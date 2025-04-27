@@ -29,21 +29,21 @@ const demoUsers: UserData[] = [
     id: '1',
     name: 'Admin',
     email: 'admin@example.com',
-    role: 'admin',
+    role: UserRole.ADMIN,
     petrobrasKey: 'A12B',
   },
   {
     id: '2',
     name: 'Carlos Supervisor',
     email: 'supervisor@example.com',
-    role: 'supervisor',
+    role: UserRole.SUPERVISOR,
     petrobrasKey: 'S34C',
   },
   {
     id: '3',
     name: 'Maria Inspetora',
     email: 'inspector@example.com',
-    role: 'inspector',
+    role: UserRole.INSPECTOR,
     petrobrasKey: '78D9',
   }
 ];
@@ -55,7 +55,7 @@ const UsersPage = () => {
   const [newUser, setNewUser] = useState<Partial<UserData>>({
     name: '',
     email: '',
-    role: 'inspector',
+    role: UserRole.INSPECTOR,
     petrobrasKey: '',
   });
   
@@ -179,9 +179,9 @@ const UsersPage = () => {
                     <TableCell>{user.email}</TableCell>
                     <TableCell>
                       <Badge className={getRoleBadgeColor(user.role)}>
-                        {user.role === 'admin' && 'Administrador'}
-                        {user.role === 'supervisor' && 'Supervisor'}
-                        {user.role === 'inspector' && 'Inspetor'}
+                        {user.role === UserRole.ADMIN && 'Administrador'}
+                        {user.role === UserRole.SUPERVISOR && 'Supervisor'}
+                        {user.role === UserRole.INSPECTOR && 'Inspetor'}
                       </Badge>
                     </TableCell>
                     <TableCell>{user.petrobrasKey}</TableCell>
@@ -283,9 +283,9 @@ const UsersPage = () => {
                   <SelectValue placeholder="Selecione uma função" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="inspector">Inspetor</SelectItem>
-                  <SelectItem value="supervisor">Supervisor</SelectItem>
-                  <SelectItem value="admin">Administrador</SelectItem>
+                  <SelectItem value={UserRole.INSPECTOR}>Inspetor</SelectItem>
+                  <SelectItem value={UserRole.SUPERVISOR}>Supervisor</SelectItem>
+                  <SelectItem value={UserRole.ADMIN}>Administrador</SelectItem>
                 </SelectContent>
               </Select>
             </div>

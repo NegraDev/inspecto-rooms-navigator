@@ -1,5 +1,5 @@
 
-import { Tower, Room, Equipment, EquipmentType, EquipmentStatus, RoomStatus, Wing, Inspection, InspectionStatus, Inspector, Report } from "../types";
+import { Tower, Room, Equipment, EquipmentType, EquipmentStatus, RoomStatus, Wing, Inspection, InspectionStatus, Inspector, Report, UserRole } from "../types";
 
 // Towers
 export const towers: Tower[] = [
@@ -43,7 +43,7 @@ export const generateRooms = (): Room[] => {
   const roomStatuses = Object.values(RoomStatus);
   
   towers.forEach(tower => {
-    for (let floor = 1; floor <= tower.floors.length; floor++) {
+    tower.floors.forEach(floor => {
       tower.wings.forEach(wing => {
         const roomCount = Math.floor(Math.random() * 4) + 2; // 2-5 rooms per wing per floor
         
@@ -66,7 +66,7 @@ export const generateRooms = (): Room[] => {
           });
         }
       });
-    }
+    });
   });
   
   return rooms;
@@ -126,7 +126,8 @@ export const inspections: Inspection[] = [
         type: "environment"
       }
     ],
-    equipmentChecked: []
+    equipmentChecked: [],
+    date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
   },
   {
     id: "insp2",
@@ -148,7 +149,8 @@ export const inspections: Inspection[] = [
         type: "defect"
       }
     ],
-    equipmentChecked: []
+    equipmentChecked: [],
+    date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString()
   }
 ];
 
@@ -165,7 +167,11 @@ export const reports: Report[] = [
       roomsInspected: 35,
       issuesFound: 8,
       inspectorId: "i1"
-    }
+    },
+    date: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+    inspectorId: "i1",
+    roomsInspected: 35,
+    issuesFound: 8
   },
   {
     id: "r2",
@@ -178,6 +184,10 @@ export const reports: Report[] = [
       roomsInspected: 12,
       issuesFound: 3,
       inspectorId: "i2"
-    }
+    },
+    date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+    inspectorId: "i2",
+    roomsInspected: 12,
+    issuesFound: 3
   }
 ];

@@ -1,3 +1,4 @@
+
 export type ServiceTicketData = {
   equipmentId: string;
   description: string;
@@ -89,7 +90,7 @@ export interface Photo {
   url: string;
   caption: string;
   timestamp: string;
-  equipmentId?: string; // Opcional - para fotos relacionadas a equipamentos específicos
+  equipmentId?: string;
   type: 'door' | 'environment' | 'equipment' | 'defect';
 }
 
@@ -101,7 +102,7 @@ export interface Equipment {
   lastChecked?: string;
   notes?: string;
   photos?: Photo[];
-  needsPhoto?: boolean; // Flag para indicar se precisa de foto (quando com defeito)
+  needsPhoto?: boolean;
 }
 
 export interface Wing {
@@ -157,6 +158,7 @@ export interface Inspection {
   photos: Photo[];
   notes?: string;
   equipmentChecked: Equipment[];
+  date?: string; // Adicionado para compatibilidade
 }
 
 export interface Report {
@@ -167,14 +169,19 @@ export interface Report {
   createdBy: string;
   type: 'inspection' | 'summary' | 'performance';
   data: any;
+  date?: string; // Adicionado para compatibilidade
+  inspectorId?: string; // Adicionado para compatibilidade
+  roomsInspected?: number; // Adicionado para compatibilidade
+  issuesFound?: number; // Adicionado para compatibilidade
 }
 
 export interface PerformanceReport {
+  id?: string;
   inspector: string;
   inspectionsCompleted: number;
   averageTime: number;
   issuesIdentified: number;
-  period: string;
+  period: "daily" | "weekly" | "monthly";
   date: string;
   inspectorId?: string;
   inspectorName?: string;
@@ -188,7 +195,7 @@ export interface TeamPerformance {
   averageCompletionTime: number;
   issuesIdentified: number;
   period: string;
-  inspectors?: PerformanceReport[];
+  inspectors: PerformanceReport[];
   totalInspections?: number;
   totalIssues?: number;
   averageEfficiency?: number;
@@ -216,7 +223,7 @@ export interface FilterOptions {
   search?: string;
 }
 
-export const RolePermissions: RolePermissions = {
+export const RolePermissionMap: RolePermissions = {
   [UserRole.ADMIN]: [
     UserPermission.VIEW_ROOMS,
     UserPermission.MANAGE_ROOMS,

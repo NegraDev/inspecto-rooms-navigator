@@ -53,7 +53,7 @@ export const PerformanceCard: React.FC<PerformanceCardProps> = ({
             {performance.period === 'monthly' && 'Desempenho Mensal'}
           </span>
           <span className="text-sm font-normal text-muted-foreground">
-            {formatDate(performance.date, performance.period as "daily" | "weekly" | "monthly")}
+            {formatDate(performance.date, performance.period)}
           </span>
         </CardTitle>
       </CardHeader>
@@ -93,7 +93,7 @@ export const PerformanceCard: React.FC<PerformanceCardProps> = ({
               <Clock className="h-4 w-4 mr-1" />
               <span>Tempo Médio</span>
             </div>
-            <div className="text-xl font-bold">{performance.averageTimePerInspection} min</div>
+            <div className="text-xl font-bold">{performance.averageTimePerInspection ?? performance.averageTime} min</div>
           </div>
           
           <div className="space-y-2">
