@@ -1,4 +1,3 @@
-
 export type ServiceTicketData = {
   equipmentId: string;
   description: string;
@@ -52,7 +51,8 @@ export enum UserRole {
   ADMIN = 'admin',
   MANAGER = 'manager',
   INSPECTOR = 'inspector',
-  USER = 'user'
+  USER = 'user',
+  SUPERVISOR = 'supervisor'
 }
 
 export enum UserPermission {
@@ -179,7 +179,7 @@ export interface PerformanceReport {
   inspectorId?: string;
   inspectorName?: string;
   averageTimePerInspection?: number;
-  efficiency?: number;
+  efficiency: number;
 }
 
 export interface TeamPerformance {
@@ -189,6 +189,9 @@ export interface TeamPerformance {
   issuesIdentified: number;
   period: string;
   inspectors?: PerformanceReport[];
+  totalInspections?: number;
+  totalIssues?: number;
+  averageEfficiency?: number;
 }
 
 export interface AwsConfig {
@@ -212,3 +215,32 @@ export interface FilterOptions {
   equipment?: EquipmentType[];
   search?: string;
 }
+
+export const RolePermissions: RolePermissions = {
+  [UserRole.ADMIN]: [
+    UserPermission.VIEW_ROOMS,
+    UserPermission.MANAGE_ROOMS,
+    UserPermission.VIEW_INSPECTIONS,
+    UserPermission.MANAGE_INSPECTIONS,
+    UserPermission.VIEW_REPORTS,
+    UserPermission.MANAGE_REPORTS,
+    UserPermission.VIEW_USERS,
+    UserPermission.MANAGE_USERS,
+    UserPermission.SYSTEM_SETTINGS,
+    UserPermission.MANAGE_EQUIPMENT
+  ],
+  [UserRole.MANAGER]: [
+    UserPermission.VIEW_ROOMS,
+    UserPermission.MANAGE_ROOMS,
+    UserPermission.VIEW_INSPECTIONS,
+    UserPermission.VIEW_REPORTS,
+    UserPermission.VIEW_USERS
+  ],
+  [UserRole.INSPECTOR]: [
+    UserPermission.VIEW_ROOMS,
+    UserPermission.VIEW_INSPECTIONS
+  ],
+  [UserRole.USER]: [
+    UserPermission.VIEW_ROOMS
+  ]
+};

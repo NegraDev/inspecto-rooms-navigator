@@ -32,7 +32,7 @@ export const PerformanceCard: React.FC<PerformanceCardProps> = ({
     previousPerformance?.efficiency
   );
 
-  const formatDate = (date: string, period: 'daily' | 'weekly' | 'monthly'): string => {
+  const formatDate = (date: string, period: "daily" | "weekly" | "monthly"): string => {
     const dateObj = new Date(date);
     if (period === 'daily') {
       return format(dateObj, "dd 'de' MMMM", { locale: ptBR });
@@ -53,7 +53,7 @@ export const PerformanceCard: React.FC<PerformanceCardProps> = ({
             {performance.period === 'monthly' && 'Desempenho Mensal'}
           </span>
           <span className="text-sm font-normal text-muted-foreground">
-            {formatDate(performance.date, performance.period)}
+            {formatDate(performance.date, performance.period as "daily" | "weekly" | "monthly")}
           </span>
         </CardTitle>
       </CardHeader>

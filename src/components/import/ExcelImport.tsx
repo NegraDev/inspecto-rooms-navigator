@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Upload, AlertCircle, FileSpreadsheet } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Tower, Wing, Room, EquipmentType, EquipmentStatus, RoomStatus } from '@/types';
+import { Tower, Wing, Room, EquipmentType, EquipmentStatus, RoomStatus, UserRole } from '@/types';
 import { Badge } from '@/components/ui/badge';
 
 type ExcelImportProps = {
@@ -198,7 +198,7 @@ const processExcelData = (data: any[]): { towers: Tower[], rooms: Room[] } => {
       towers.set(towerId, {
         id: towerId,
         name: towerName,
-        floors: 15,
+        floors: Array.from({ length: 15 }, (_, i) => i + 1),
         wings: []
       });
     }
@@ -208,7 +208,8 @@ const processExcelData = (data: any[]): { towers: Tower[], rooms: Room[] } => {
       const wing: Wing = {
         id: wingId,
         name: wingName,
-        towerId: towerId
+        towerId: towerId,
+        floorNumber: floorNumber
       };
       
       wings.set(wingId, wing);
