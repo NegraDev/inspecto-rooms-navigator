@@ -82,6 +82,32 @@
   body {
     @apply bg-background text-foreground font-sans;
     font-family: 'Inter', sans-serif;
+    overscroll-behavior: none; /* Evita o efeito "bounce" em iOS */
+    overflow-x: hidden; /* Evita scroll horizontal */
+  }
+  
+  /* Ajustes para dispositivos móveis */
+  @media (max-width: 768px) {
+    input, select, textarea, button {
+      font-size: 16px !important; /* Evita zoom automático em iOS */
+    }
+    
+    .pb-safe {
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    
+    .pt-safe {
+      padding-top: env(safe-area-inset-top);
+    }
+  }
+  
+  /* Oculta elementos de rolagem em dispositivos móveis */
+  @media (max-width: 768px) {
+    ::-webkit-scrollbar {
+      width: 0px;
+      height: 0px;
+      background: transparent;
+    }
   }
 }
 
@@ -104,6 +130,20 @@
   
   .text-balance {
     text-wrap: balance;
+  }
+  
+  /* Classe para correção de posicionamento em dispositivos iOS */
+  .ios-position-fix {
+    transform: translateZ(0);
+  }
+  
+  /* Estilos para mobile */
+  .mobile-container {
+    @apply px-4 pt-4 pb-20;
+  }
+  
+  .mobile-page {
+    padding-bottom: calc(4rem + env(safe-area-inset-bottom));
   }
 }
 

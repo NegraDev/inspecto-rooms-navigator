@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Equipment, EquipmentStatus, EquipmentType } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -148,5 +149,87 @@ export const EquipmentCard: React.FC<EquipmentCardProps> = ({ equipment, onStatu
         )}
       </CardContent>
     </Card>
+  );
+};
+
+// Adicionado componente TowerMap
+import { Tower, Room } from '@/types';
+import { useState as useReactState, useEffect } from 'react';
+import { FloorSelector } from './FloorSelector';
+import { TowerSelector } from './TowerSelector';
+import { FloorMap } from './FloorMap';
+import { RoomStatusLegend } from './RoomStatusLegend';
+import { useIsMobile } from '@/hooks/use-mobile';
+
+interface TowerMapProps {
+  towers: Tower[];
+  rooms: Room[];
+}
+
+export const TowerMap: React.FC<TowerMapProps> = ({ towers, rooms }) => {
+  const [selectedTower, setSelectedTower] = useReactState<Tower | null>(towers.length > 0 ? towers[0] : null);
+  const [selectedFloor, setSelectedFloor] = useReactState<number | null>(
+    selectedTower && selectedTower.floors.length > 0 ? selectedTower.floors[0] : null
+  );
+  const isMobile = useIsMobile();
+  
+  // Atualizar o andar selecionado quando a torre mudar
+  useEffect(() => {
+    if (selectedTower && selectedTower.floors.length > 0) {
+      setSelectedFloor(selectedTower.floors[0]);
+    } else {
+      setSelectedFloor(null);
+    }
+  }, [selectedTower]);
+  
+  // Filtrar salas pelo andar e torre selecionados
+  const filteredRooms = rooms.filter(room => 
+    room.towerId === selectedTower?.id && 
+    room.floorNumber === selectedFloor
+  );
+  
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-col md:flex-row gap-4 items-start">
+        <div className={`${isMobile ? 'w-full' : 'w-1/3'} space-y-4`}>
+          <TowerSelector 
+            towers={towers} 
+            selectedTower={selectedTower} 
+            onSelectTower={setSelectedTower} 
+          />
+          
+          {selectedTower && (
+            <FloorSelector 
+              floors={selectedTower.floors} 
+              selectedFloor={selectedFloor} 
+              onSelectFloor={setSelectedFloor} 
+            />
+          )}
+          
+          <RoomStatusLegend />
+        </div>
+        
+        <div className={`${isMobile ? 'w-full' : 'w-2/3'}`}>
+          {selectedTower && selectedFloor !== null ? (
+            <div className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
+              <h3 className="text-lg font-medium mb-4">
+                Torre {selectedTower.name} - Andar {selectedFloor}
+                <span className="text-sm text-muted-foreground ml-2">
+                  ({filteredRooms.length} salas)
+                </span>
+              </h3>
+              
+              <FloorMap rooms={filteredRooms} />
+            </div>
+          ) : (
+            <div className="bg-white p-8 rounded-lg border border-gray-100 shadow-sm text-center">
+              <p className="text-muted-foreground">
+                Selecione uma torre e um andar para visualizar o mapa.
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   );
 };
