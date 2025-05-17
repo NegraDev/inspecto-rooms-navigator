@@ -1,7 +1,7 @@
 
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Upload, FileCsv, AlertCircle, Loader2 } from 'lucide-react';
+import { Upload, Files, AlertCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tower, Room, EquipmentType, EquipmentStatus, RoomStatus } from '@/types';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -185,7 +185,7 @@ export const CsvImport: React.FC<CsvImportProps> = ({ onImportComplete }) => {
       >
         <input {...getInputProps()} />
         <div className="space-y-4">
-          <FileCsv className="mx-auto h-12 w-12 text-gray-400" />
+          <Files className="mx-auto h-12 w-12 text-gray-400" />
           <div>
             {isDragActive ? (
               <p className="text-primary font-medium">Solte o arquivo aqui...</p>

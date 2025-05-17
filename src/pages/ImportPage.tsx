@@ -4,7 +4,7 @@ import { PageLayout } from '@/components/layout/PageLayout';
 import { ExcelImport } from '@/components/import/ExcelImport';
 import { Tower, Room } from '@/types';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, CheckCircle2, ShieldAlert, FileSpreadsheet, FileCsv } from 'lucide-react';
+import { AlertCircle, CheckCircle2, ShieldAlert, FileSpreadsheet, Files } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
@@ -83,7 +83,7 @@ const ImportPage = () => {
               Excel
             </TabsTrigger>
             <TabsTrigger value="csv" className="flex items-center gap-2">
-              <FileCsv className="h-4 w-4" />
+              <Files className="h-4 w-4" />
               CSV
             </TabsTrigger>
           </TabsList>
