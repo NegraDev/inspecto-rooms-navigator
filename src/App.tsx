@@ -22,9 +22,6 @@ import ImportPage from './pages/ImportPage';
 // Componentes
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 
-// Capacitor
-import { App as CapApp } from '@capacitor/core';
-
 // Criação do cliente de Query
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -46,22 +43,6 @@ const ScrollToTop: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 };
 
 function App() {
-  // Gerenciamento do botão voltar para aplicações mobile
-  useEffect(() => {
-    if (CapApp) {
-      CapApp.addListener('backButton', ({ canGoBack }) => {
-        if (canGoBack) {
-          window.history.back();
-        } else {
-          // Confirmar saída do app
-          if (confirm('Deseja sair do aplicativo?')) {
-            CapApp.exitApp();
-          }
-        }
-      });
-    }
-  }, []);
-
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
@@ -101,7 +82,7 @@ function App() {
                 </ProtectedRoute>
               } />
               <Route path="/users" element={
-                <ProtectedRoute allowedRoles={['admin', 'manager']}>
+                <ProtectedRoute>
                   <UsersPage />
                 </ProtectedRoute>
               } />
@@ -111,7 +92,7 @@ function App() {
                 </ProtectedRoute>
               } />
               <Route path="/import" element={
-                <ProtectedRoute allowedRoles={['admin', 'manager']}>
+                <ProtectedRoute>
                   <ImportPage />
                 </ProtectedRoute>
               } />

@@ -1,13 +1,16 @@
+
 import React, { useState } from 'react';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { ExcelImport } from '@/components/import/ExcelImport';
 import { Tower, Room } from '@/types';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, CheckCircle2, ShieldAlert } from 'lucide-react';
+import { AlertCircle, CheckCircle2, ShieldAlert, FileSpreadsheet, FileCsv } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { CsvImport } from '@/components/import/CsvImport';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const ImportPage = () => {
   const [importedData, setImportedData] = useState<{ towers: Tower[], rooms: Room[] } | null>(null);
@@ -68,12 +71,31 @@ const ImportPage = () => {
               Área Administrativa - Importar Dados
             </h1>
             <p className="text-muted-foreground">
-              Importe dados de salas e torres a partir de um arquivo Excel
+              Importe dados de salas e torres a partir de arquivos Excel ou CSV
             </p>
           </div>
         </div>
         
-        <ExcelImport onImportComplete={handleImportComplete} />
+        <Tabs defaultValue="excel" className="w-full">
+          <TabsList className="mb-4">
+            <TabsTrigger value="excel" className="flex items-center gap-2">
+              <FileSpreadsheet className="h-4 w-4" />
+              Excel
+            </TabsTrigger>
+            <TabsTrigger value="csv" className="flex items-center gap-2">
+              <FileCsv className="h-4 w-4" />
+              CSV
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="excel">
+            <ExcelImport onImportComplete={handleImportComplete} />
+          </TabsContent>
+          
+          <TabsContent value="csv">
+            <CsvImport onImportComplete={handleImportComplete} />
+          </TabsContent>
+        </Tabs>
         
         {importedData && (
           <div className="space-y-4">
