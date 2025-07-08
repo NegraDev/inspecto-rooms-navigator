@@ -5,7 +5,7 @@ import { Separator } from '@/components/ui/separator';
 import { RoomHeader } from './components/RoomHeader';
 import { RoomActions } from './components/RoomActions';
 import { EquipmentCard } from './components/EquipmentCard';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 
 interface RoomDetailProps {
   room: Room;

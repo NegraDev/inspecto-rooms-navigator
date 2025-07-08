@@ -7,7 +7,7 @@ import { rooms } from '@/data/mockData';
 import { Room, Photo, EquipmentStatus } from '@/types';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Save, Check, AlertTriangle } from 'lucide-react';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 // Define photo types that are required for inspection

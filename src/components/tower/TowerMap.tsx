@@ -9,7 +9,7 @@ import {
   Tv, Radio, Battery, Cable, Power, Filter, Volume2,
   CheckCircle, AlertTriangle, Wrench, HelpCircle, Camera
 } from 'lucide-react';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 
 interface EquipmentCardProps {
   equipment: Equipment;
